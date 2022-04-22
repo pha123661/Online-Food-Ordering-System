@@ -6,6 +6,9 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
+    '''
+    redirect user to index.html aka sign-in page
+    '''
     return redirect("/index.html")
 
 
