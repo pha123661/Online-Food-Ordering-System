@@ -47,8 +47,19 @@ def index():
 
 @app.route("/login", methods=['POST'])
 def login():
-    account = request.form['Account']
-    passward = request.form['password']
+    Account = request.form['Account']
+    password = request.form['password']
+    # hash password
+    password = hashlib.sha256((password + Account).encode()).hexdigest()
+
+    db = get_db()
+    for login_info in db.cursor().execute("select U_account, U_password from Users"):
+        if (Account, password) == login_info:
+            # successfull
+            return redirect(url_for('nav'))
+
+    flash("Login failed, please try again")
+    return redirect(url_for('index'))
 
 
 @app.route("/sign-up.html")
