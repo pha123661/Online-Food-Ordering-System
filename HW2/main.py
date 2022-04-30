@@ -69,7 +69,7 @@ def login():
                 'U_latitude': user_info[4],
                 'U_longitude': user_info[5],
             }
-            flash("Login successfull")
+            # login successfully
             session['user_info'] = user_info
             return redirect(url_for('nav'))
 
