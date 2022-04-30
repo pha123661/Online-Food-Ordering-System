@@ -56,7 +56,20 @@ def login():
     for login_info in db.cursor().execute("select U_account, U_password from Users"):
         if (Account, password) == login_info:
             # successfull
-            return redirect(url_for('nav'))
+            user_info = next(iter(db.cursor().execute(
+                """select U_name, U_type, U_phone, U_balance 
+                   from Users 
+                   where U_account = ?
+                   and   U_password = ?""", (Account, password))))
+            user_info = {
+                'U_name': user_info[0],
+                'U_type': 'owner' if user_info[1] else 'user',
+                'U_phone': user_info[2],
+                'U_balance': user_info[3]
+            }
+            flash("Login successfull")
+            session['user_info'] = user_info
+            return redirect(url_for('nav', user_info=user_info))
 
     flash("Login failed, please try again")
     return redirect(url_for('index'))
@@ -136,7 +149,8 @@ def register():
 
 @app.route("/nav.html")
 def nav():
-    return render_template("nav.html")
+    user_info = session.get('user_info', None)
+    return render_template("nav.html", user_info=user_info)
 
 
 def main():
