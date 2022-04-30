@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import hashlib
 from flask import *
 
 DATABASE = "HWDB.db"
@@ -74,21 +75,22 @@ def register():
             flash("Please make sure all fields are filled in")
             return redirect(url_for("sign_up"))
 
-    # check format of Account/Password/Phone/Name:
+    # check format of Account/Password/Phone/Name/Locations:
+    # account
     for c in Account:
         if not (c.isdigit() or c.isalpha()):
             flash("Please check: Account can only contain letters and numbers")
             return redirect(url_for("sign_up"))
-
+    # pwd
     for c in password:
         if not (c.isdigit() or c.isalpha()):
             flash("Please check: password can only contain letters and numbers")
             return redirect(url_for("sign_up"))
-
+    # phone
     if len(phonenumber) != 10 or not phonenumber.isdigit():
         flash("Please check: phone number can only contain 10 digits")
         return redirect(url_for("sign_up"))
-
+    # name
     if len(name.split()) != 2:
         flash("Please check: please fill in first name and last name")
         return redirect(url_for("sign_up"))
@@ -96,6 +98,16 @@ def register():
         if not (c.isalpha() or c == ' '):
             flash("Please check: name can only contain letters and spaces")
             return redirect(url_for("sign_up"))
+    # latitude and longitude
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except ValueError:
+        flash("Please check: locations can only be float")
+        return redirect(url_for("sign_up"))
+
+    # hash password + salt (account) before storing it
+    password = hashlib.sha256((password + Account).encode()).hexdigest()
 
     db = get_db()
     try:
