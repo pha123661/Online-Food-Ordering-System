@@ -72,6 +72,16 @@
 					<!-- <div class="form-group">
 							<div class="alert alert-success" role="alert">Your info has been saved.</div>
 						</div> -->
+					{% with messages = get_flashed_messages() %}
+					{% if messages %}
+					<ul class=flashes>
+						{% for message in messages %}
+						<li>{{ message }}</li>
+						{% endfor %}
+					</ul>
+					{% endif %}
+					{% endwith %}
+					{% block body %}{% endblock %}
 					<div class="form-group">
 						<label for="name" class="sr-only">Name</label>
 						<input type="text" class="form-control" id="name" name="name" placeholder="Name"
