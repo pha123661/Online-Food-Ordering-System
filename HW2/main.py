@@ -1,13 +1,17 @@
 import sqlite3
 import os
 import hashlib
-from flask import Flask, render_template, g, request, session, flash, redirect, url_for
+from flask import (
+    Flask, render_template, g, request,
+    session, flash, redirect, url_for,
+    json, jsonify,
+)
 
 DATABASE = "HWDB.db"
 SCHEMA = 'schema.sql'
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.urandom(99)
 
 
 def get_db():
@@ -55,12 +59,15 @@ def login():
     db = get_db()
     for login_info in db.cursor().execute("select U_account, U_password from Users"):
         if (Account, password) == login_info:
-            # successfull
-            user_info = next(iter(db.cursor().execute(
+            # successfull found entry
+            user_info = db.cursor().execute(
                 """select U_name, U_type, U_phone, U_balance, U_latitude, U_longitude
                    from Users 
                    where U_account = ?
-                   and   U_password = ?""", (Account, password))))
+                   and   U_password = ?""", (Account, password))
+            # get first item
+            user_info = next(iter(user_info))
+            # transform into dict
             user_info = {
                 'U_name': user_info[0],
                 'U_type': 'owner' if user_info[1] else 'user',
@@ -84,16 +91,19 @@ def sign_up():
 
 @app.route("/register", methods=['POST'])
 def register():
+    # get input values
     name = request.form['name']
     phonenumber = request.form['phonenumber']
     Account = request.form['Account']
     password = request.form['password']
+    latitude = request.form['latitude']
+    longitude = request.form['longitude']
+
+    # check re-type password
     if password != request.form['re-password']:
         # sign-up fail
         flash("Please check: password and re-password need to be the same!")
         return redirect(url_for("sign_up"))
-    latitude = request.form['latitude']
-    longitude = request.form['longitude']
 
     # check any blanks:
     for e in (Account, password, name, latitude, longitude, phonenumber):
@@ -101,21 +111,24 @@ def register():
             flash("Please make sure all fields are filled in")
             return redirect(url_for("sign_up"))
 
-    # check format of Account/Password/Phone/Name/Locations:
+    # check formats:
     # account
     for c in Account:
         if not (c.isdigit() or c.isalpha()):
             flash("Please check: Account can only contain letters and numbers")
             return redirect(url_for("sign_up"))
+
     # pwd
     for c in password:
         if not (c.isdigit() or c.isalpha()):
             flash("Please check: password can only contain letters and numbers")
             return redirect(url_for("sign_up"))
+
     # phone
     if len(phonenumber) != 10 or not phonenumber.isdigit():
         flash("Please check: phone number can only contain 10 digits")
         return redirect(url_for("sign_up"))
+
     # name
     if len(name.split()) != 2:
         flash("Please check: please fill in first name and last name")
@@ -124,6 +137,7 @@ def register():
         if not (c.isalpha() or c == ' '):
             flash("Please check: name can only contain letters and spaces")
             return redirect(url_for("sign_up"))
+
     # latitude and longitude
     try:
         latitude = float(latitude)
@@ -135,6 +149,7 @@ def register():
     # hash password + salt (account) before storing it
     password = hashlib.sha256((password + Account).encode()).hexdigest()
 
+    # store newly registered user informations
     db = get_db()
     try:
         db.cursor().execute('''
@@ -145,6 +160,8 @@ def register():
         flash("User account is already registered, please try another account")
         return redirect(url_for("sign_up"))
     db.commit()
+
+    # Register successfully
     flash("Registered Successfully, you may login now")
     return redirect(url_for("index"))
 
