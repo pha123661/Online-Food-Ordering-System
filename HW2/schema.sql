@@ -1,6 +1,6 @@
 create table if not exists Users(
     UID INTEGER PRIMARY KEY AUTOINCREMENT,
-    U_account varchar(255) NOT NULL,
+    U_account varchar(255) UNIQUE NOT NULL,
     U_password varchar(255) NOT NULL,
     U_name varchar(255) NOT NULL,
     U_type int NOT NULL, -- 0: Normal user, 1: Shop owner
@@ -12,7 +12,7 @@ create table if not exists Users(
 
 create table if not exists Stores(
     SID INTEGER PRIMARY KEY AUTOINCREMENT,
-    S_name varchar(255) NOT NULL,
+    S_name varchar(255) UNIQUE NOT NULL,
     S_latitude float NOT NULL,
     S_longitude float NOT NULL,
     S_phone varchar(255) NOT NULL,
