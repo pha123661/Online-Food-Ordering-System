@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import hashlib
-from flask import *
+from flask import Flask, render_template, g, request, session, flash, redirect, url_for
 
 DATABASE = "HWDB.db"
 SCHEMA = 'schema.sql'
