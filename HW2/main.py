@@ -36,7 +36,7 @@ def home():
     '''
     redirect user to index.html ie sign-in page
     '''
-    return redirect("/index.html")
+    return redirect(url_for(index))
 
 
 @app.route("/index.html")
@@ -63,9 +63,52 @@ def register():
     password = request.form['password']
     if password != request.form['re-password']:
         # sign-up fail
-        pass
+        flash("Please check: password and re-password need to be the same!")
+        return redirect(url_for("sign_up"))
     latitude = request.form['latitude']
     longitude = request.form['longitude']
+
+    # check any blanks:
+    for e in (Account, password, name, latitude, longitude, phonenumber):
+        if e == '':
+            flash("Please make sure all fields are filled in")
+            return redirect(url_for("sign_up"))
+
+    # check format of Account/Password/Phone/Name:
+    for c in Account:
+        if not (c.isdigit() or c.isalpha()):
+            flash("Please check: Account can only contain letters and numbers")
+            return redirect(url_for("sign_up"))
+
+    for c in password:
+        if not (c.isdigit() or c.isalpha()):
+            flash("Please check: password can only contain letters and numbers")
+            return redirect(url_for("sign_up"))
+
+    if len(phonenumber) != 10 or not phonenumber.isdigit():
+        flash("Please check: phone number can only contain 10 digits")
+        return redirect(url_for("sign_up"))
+
+    if len(name.split()) != 2:
+        flash("Please check: please fill in first name and last name")
+        return redirect(url_for("sign_up"))
+    for c in name:
+        if not (c.isalpha() or c == ' '):
+            flash("Please check: name can only contain letters and spaces")
+            return redirect(url_for("sign_up"))
+
+    db = get_db()
+    try:
+        db.cursor().execute('''
+            insert into Users (U_account, U_password, U_name, U_type, U_latitude, U_longitude, U_phone, U_balance)
+            values (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (Account, password, name, 0, latitude, longitude, phonenumber, 0))
+    except sqlite3.IntegrityError:
+        flash("User account is already registered, please try another account")
+        return redirect(url_for("sign_up"))
+    db.commit()
+    flash("Registered Successfully, you may login now")
+    return redirect(url_for("index"))
 
 
 @app.route("/nav.html")
