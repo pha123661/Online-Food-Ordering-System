@@ -15,6 +15,9 @@ app.config['SECRET_KEY'] = os.urandom(99)
 
 
 def get_db():
+    '''
+    helper function to get database connection
+    '''
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
@@ -23,12 +26,18 @@ def get_db():
 
 @app.teardown_appcontext
 def close_connection(exception):
+    '''
+    close database after session ends
+    '''
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
 
 
 def init_db():
+    '''
+    initialize database
+    '''
     with app.app_context():
         db = get_db()
         with app.open_resource(SCHEMA, mode='r') as f:
@@ -46,6 +55,9 @@ def home():
 
 @app.route("/index.html")
 def index():
+    '''
+    renders login page
+    '''
     return render_template("index.html")
 
 
@@ -56,6 +68,7 @@ def login():
     # hash password
     password = hashlib.sha256((password + Account).encode()).hexdigest()
 
+    # check if user in stored in database
     db = get_db()
     for login_info in db.cursor().execute("select U_account, U_password from Users"):
         if (Account, password) == login_info:
@@ -89,12 +102,16 @@ def sign_up():
 
 @app.route("/register-account-check", methods=['POST'])
 def register_account_check():
+    '''
+    checks if account is already registered
+    helper function handling ajax request
+    '''
     account = request.form.get('Account')
     db = get_db()
     rst = db.cursor().execute(
         "select U_account from Users where U_account = ?", (account,)).fetchone()
 
-    # empty
+    # empty string
     if account is None or account == '':
         response = jsonify(
             '<span style=\'color:red;\'>Please enter your account</span>')
@@ -106,6 +123,7 @@ def register_account_check():
         response = jsonify(
             '<span style=\'color:green;\'>Account has not been registered</span>')
 
+    # **Important**
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
