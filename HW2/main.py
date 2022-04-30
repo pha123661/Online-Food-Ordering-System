@@ -57,7 +57,7 @@ def login():
         if (Account, password) == login_info:
             # successfull
             user_info = next(iter(db.cursor().execute(
-                """select U_name, U_type, U_phone, U_balance 
+                """select U_name, U_type, U_phone, U_balance, U_latitude, U_longitude
                    from Users 
                    where U_account = ?
                    and   U_password = ?""", (Account, password))))
@@ -65,11 +65,13 @@ def login():
                 'U_name': user_info[0],
                 'U_type': 'owner' if user_info[1] else 'user',
                 'U_phone': user_info[2],
-                'U_balance': user_info[3]
+                'U_balance': user_info[3],
+                'U_latitude': user_info[4],
+                'U_longitude': user_info[5],
             }
             flash("Login successfull")
             session['user_info'] = user_info
-            return redirect(url_for('nav', user_info=user_info))
+            return redirect(url_for('nav'))
 
     flash("Login failed, please try again")
     return redirect(url_for('index'))
