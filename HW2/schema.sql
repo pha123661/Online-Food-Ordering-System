@@ -1,8 +1,8 @@
 create table if not exists Users(
     UID INTEGER PRIMARY KEY AUTOINCREMENT,
-    U_Account varchar(255) NOT NULL,
-    U_Password varchar(255) NOT NULL,
-    U_Name varchar(255) NOT NULL,
+    U_account varchar(255) NOT NULL,
+    U_password varchar(255) NOT NULL,
+    U_name varchar(255) NOT NULL,
     U_type int NOT NULL, -- 0: Normal user, 1: Shop owner
     U_latitude float NOT NULL,
     U_longitude float NOT NULL,
@@ -12,7 +12,7 @@ create table if not exists Users(
 
 create table if not exists Stores(
     SID INTEGER PRIMARY KEY AUTOINCREMENT,
-    S_Name varchar(255) NOT NULL,
+    S_name varchar(255) NOT NULL,
     S_latitude float NOT NULL,
     S_longitude float NOT NULL,
     S_phone varchar(255) NOT NULL,
@@ -36,7 +36,7 @@ create table if not exists Orders(
 create table if not exists Process_Order(
     UID int NOT NULL,
     OID int NOT NULL,
-    PO_ActionType int NOT NULL, -- 0: User order, 1: User cancel, 2: Owner deliver, 3:Owner cancel
+    PO_type int NOT NULL, -- 0: User order, 1: User cancel, 2: Owner deliver, 3:Owner cancel
     primary key (UID, OID),
     foreign key (UID) references Users(UID),
     foreign key (OID) references Orders(OID)
