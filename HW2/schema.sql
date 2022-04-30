@@ -2,7 +2,7 @@ create table if not exists Users(
     UID INTEGER PRIMARY KEY AUTOINCREMENT,
     U_account varchar(255) UNIQUE NOT NULL,
     U_password varchar(255) NOT NULL,
-    U_name varchar(255) NOT NULL,
+    U_name varchar(255) NOT NULL, -- {First name}  {Last name}
     U_type int NOT NULL, -- 0: Normal user, 1: Shop owner
     U_latitude float NOT NULL,
     U_longitude float NOT NULL,
@@ -53,7 +53,7 @@ create table if not exists Transaction_Record(
 create table if not exists Products(
     PID INTEGER PRIMARY KEY AUTOINCREMENT,
     P_name varchar(255) NOT NULL,
-    P_price int NOT NULL,
+    P_price int unsigned NOT NULL,
     P_image BLOB NOT NULL, -- image encoded by base64
     P_owner int NOT NULL,
     P_store int NOT NULL,
@@ -64,7 +64,7 @@ create table if not exists Products(
 create table if not exists O_Contains_P(
     OID int NOT NULL,
     PID int NOT NULL,
-    Quantity int NOT NULL,
+    Quantity int unsigned NOT NULL,
     primary key (OID, PID),
     foreign key (OID) references Orders(OID),
     foreign key (PID) references Products(PID)
