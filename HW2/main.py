@@ -61,12 +61,10 @@ def login():
         if (Account, password) == login_info:
             # successfull found entry
             user_info = db.cursor().execute(
-                """select U_name, U_type, U_phone, U_balance, U_latitude, U_longitude
-                   from Users 
-                   where U_account = ?
-                   and   U_password = ?""", (Account, password))
-            # get first item
-            user_info = next(iter(user_info))
+                """ select U_name, U_type, U_phone, U_balance, U_latitude, U_longitude
+                    from Users 
+                    where U_account = ?
+                    and   U_password = ?""", (Account, password)).fetchone()
             # transform into dict
             user_info = {
                 'U_name': user_info[0],
@@ -87,6 +85,30 @@ def login():
 @app.route("/sign-up.html")
 def sign_up():
     return render_template("sign-up.html")
+
+
+@app.route("/register-account-check", methods=['POST'])
+def register_account_check():
+    account = request.form.get('Account')
+    db = get_db()
+    rst = db.cursor().execute(
+        "select U_account from Users where U_account = ?", (account,)).fetchone()
+
+    # empty
+    if account is None or account == '':
+        response = jsonify(
+            '<span style=\'color:red;\'>Please enter your account</span>')
+    # account used
+    elif rst:
+        response = jsonify(
+            '<span style=\'color:red;\'>Account has been registered</span>')
+    else:
+        response = jsonify(
+            '<span style=\'color:green;\'>Account has not been registered</span>')
+
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
 
 
 @app.route("/register", methods=['POST'])
