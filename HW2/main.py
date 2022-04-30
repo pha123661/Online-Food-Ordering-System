@@ -81,7 +81,7 @@ def login():
             # transform into dict
             user_info = {
                 'U_name': user_info[0],
-                'U_type': 'owner' if user_info[1] else 'user',
+                'U_type': 'manager' if user_info[1] else 'user',
                 'U_phone': user_info[2],
                 'U_balance': user_info[3],
                 'U_latitude': user_info[4],
