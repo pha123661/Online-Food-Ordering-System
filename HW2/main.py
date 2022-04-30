@@ -37,7 +37,7 @@ def home():
     '''
     redirect user to index.html ie sign-in page
     '''
-    return redirect(url_for(index))
+    return redirect(url_for('index'))
 
 
 @app.route("/index.html")
