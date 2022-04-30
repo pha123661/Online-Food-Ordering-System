@@ -71,6 +71,16 @@
 				<!-- Start Sign In Form -->
 				<form action="login" method="post" class="fh5co-form animate-box" data-animate-effect="fadeIn">
 					<h2>Sign In</h2>
+					{% with messages = get_flashed_messages() %}
+					{% if messages %}
+					<ul class=flashes>
+						{% for message in messages %}
+						<li>{{ message }}</li>
+						{% endfor %}
+					</ul>
+					{% endif %}
+					{% endwith %}
+					{% block body %}{% endblock %}
 					<div class="form-group">
 						<label for="Account" class="sr-only">Account</label>
 						<input type="text" class="form-control" id="Account" name="Account" placeholder="Account"
