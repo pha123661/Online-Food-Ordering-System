@@ -34,14 +34,44 @@
 
 
     </ul>
+
     <div class="tab-content">
       <div id="home" class="tab-pane fade in active">
         <h3>Profile</h3>
         <div class="row">
-          <div class="col-xs-10">
-            Account: {{user_info['U_name']}}, {{user_info['U_type']}}, PhoneNumber: {{user_info['U_phone']}},
-            walletbalance: {{user_info['U_balance']}},
-            Location: ({{user_info['U_latitude']}}, {{user_info['U_longitude']}})
+          <div class="col-xs-12">
+            Accouont: {{user_info['U_name']}}, {{user_info['U_type']}}, PhoneNumber: {{user_info['U_phone']}}, location:
+            {{user_info['U_latitude']}}, {{user_info['U_longitude']}}
+
+            <button type="button " style="margin-left: 5px;" class=" btn btn-info " data-toggle="modal"
+              data-target="#location">edit location</button>
+            <!--  -->
+            <div class="modal fade" id="location" data-backdrop="static" tabindex="-1" role="dialog"
+              aria-labelledby="staticBackdropLabel" aria-hidden="true">
+              <div class="modal-dialog  modal-sm">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">edit location</h4>
+                  </div>
+                  <div class="modal-body">
+                    <label class="control-label " for="latitude">latitude</label>
+                    <input type="text" class="form-control" id="latitude" placeholder="enter latitude">
+                    <br>
+                    <label class="control-label " for="longitude">longitude</label>
+                    <input type="text" class="form-control" id="longitude" placeholder="enter longitude">
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+            <!--  -->
+            walletbalance: {{user_info['U_balance']}}
             <!-- Modal -->
             <button type="button " style="margin-left: 5px;" class=" btn btn-info " data-toggle="modal"
               data-target="#myModal">Add value</button>
@@ -54,7 +84,7 @@
                     <h4 class="modal-title">Add value</h4>
                   </div>
                   <div class="modal-body">
-                    <input type="text" class="form-control" id="Meal" placeholder="enter add value">
+                    <input type="text" class="form-control" id="value" placeholder="enter add value">
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Add</button>
