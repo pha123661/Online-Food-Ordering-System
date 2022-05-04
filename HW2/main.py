@@ -20,7 +20,9 @@ def get_db():
     '''
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
+        db = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+        g._database = db
     return db
 
 
@@ -70,29 +72,18 @@ def login():
 
     # check if user in stored in database
     db = get_db()
-    for login_info in db.cursor().execute("select U_account, U_password from Users"):
-        if (Account, password) == login_info:
-            # successfull found entry
-            user_info = db.cursor().execute(
-                """ select U_name, U_type, U_phone, U_balance, U_latitude, U_longitude
-                    from Users 
-                    where U_account = ?
-                    and   U_password = ?""", (Account, password)).fetchone()
-            # transform into dict
-            user_info = {
-                'U_name': user_info[0],
-                'U_type': 'manager' if user_info[1] else 'user',
-                'U_phone': user_info[2],
-                'U_balance': user_info[3],
-                'U_latitude': user_info[4],
-                'U_longitude': user_info[5],
-            }
-            # login successfully
-            session['user_info'] = user_info
-            return redirect(url_for('nav'))
-
-    flash("Login failed, please try again")
-    return redirect(url_for('index'))
+    user_info = db.cursor().execute(""" select *
+                                        from Users
+                                        where U_account = ?
+                                        and   U_password = ?""", (Account, password)).fetchone()
+    if user_info is None:
+        # login failed
+        flash("Login failed, please try again")
+        return redirect(url_for('index'))
+    else:
+        # login successfully
+        session['user_info'] = dict(user_info)
+        return redirect(url_for('nav'))
 
 
 @app.route("/sign-up.html")
@@ -206,9 +197,13 @@ def register():
     return redirect(url_for("index"))
 
 
-@app.route("/nav.html")
+@ app.route("/nav.html")
 def nav():
     user_info = session.get('user_info', None)
+    if user_info is None:
+        # not logged in
+        flash("Please login first")
+        return redirect(url_for("index"))
     return render_template("nav.html", user_info=user_info)
 
 
