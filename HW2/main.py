@@ -72,10 +72,11 @@ def login():
 
     # check if user in stored in database
     db = get_db()
-    user_info = db.cursor().execute(""" select *
-                                        from Users
-                                        where U_account = ?
-                                        and   U_password = ?""", (Account, password)).fetchone()
+    user_info = db.cursor().execute(
+        """ select *
+            from Users
+            where U_account = ? and U_password = ?""", (Account, password)
+    ).fetchone()
     if user_info is None:
         # login failed
         flash("Login failed, please try again")
