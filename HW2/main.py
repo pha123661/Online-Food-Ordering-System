@@ -87,6 +87,13 @@ def login():
         return redirect(url_for('nav'))
 
 
+@app.route("/logout", methods=['POST'])
+def logout():
+    session['user_info'] = None
+    flash("Logged out")
+    return redirect(url_for('index'))
+
+
 @app.route("/sign-up.html")
 def sign_up():
     return render_template("sign-up.html")

@@ -20,12 +20,20 @@
 
   <nav class="navbar navbar-inverse">
     <div class="container-fluid">
+
       <div class="navbar-header">
         <a class="navbar-brand " href="{{ url_for('home') }}">FakePanda</a>
       </div>
 
     </div>
   </nav>
+  <div style="float:right">
+    <form align="right" name="form1" method="post" action="{{url_for('logout')}}">
+      <label class="logoutLblPos">
+        <input name="Logout" type="submit" style="margin-left: 5px;" class=" btn btn-info " id="Logout" value="Logout">
+      </label>
+    </form>
+  </div>
   <div class="container">
 
     <ul class="nav nav-tabs">
@@ -45,7 +53,7 @@
             {{user_info['U_latitude']}}, {{user_info['U_longitude']}}
 
             <button type="button " style="margin-left: 5px;" class=" btn btn-info " data-toggle="modal"
-              data-target="#location">edit location</button>
+              data-target="#location">Edit location</button>
             <!--  -->
             <div class="modal fade" id="location" data-backdrop="static" tabindex="-1" role="dialog"
               aria-labelledby="staticBackdropLabel" aria-hidden="true">
