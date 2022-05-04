@@ -64,14 +64,20 @@
                     <h4 class="modal-title">edit location</h4>
                   </div>
                   <div class="modal-body">
-                    <label class="control-label " for="latitude">latitude</label>
-                    <input type="text" class="form-control" id="latitude" placeholder="enter latitude">
-                    <br>
-                    <label class="control-label " for="longitude">longitude</label>
-                    <input type="text" class="form-control" id="longitude" placeholder="enter longitude">
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Edit</button>
+                    <form id="edit_location" action="edit_location" method="post">
+                      <label class="control-label " for="latitude">latitude</label>
+                      <input type="text" class="form-control" name="latitude" id="latitude"
+                        placeholder="enter latitude">
+
+                      <br>
+                      <label class="control-label " for="longitude">longitude</label>
+                      <input type="text" class="form-control" name="longitude" id="longitude"
+                        placeholder="enter longitude">
+                      <div class="modal-footer">
+                        <button type="submit" class="btn btn-default">Edit</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>

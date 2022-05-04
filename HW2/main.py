@@ -212,7 +212,40 @@ def nav():
         # not logged in
         flash("Please login first")
         return redirect(url_for("index"))
+    else:
+        # update session info
+        UID = user_info['UID']
+        db = get_db()
+        user_info = db.cursor().execute(
+            """ select *
+                from Users
+                where UID = ?""", (UID,)
+        ).fetchone()
+        session['user_info'] = dict(user_info)
     return render_template("nav.html", user_info=user_info)
+
+
+@app.route("/edit_location", methods=['POST'])
+def edit_location():
+    user_info = session.get('user_info', None)
+    if user_info is None:
+        # not logged in
+        flash("Please login first")
+        return redirect(url_for("index"))
+    UID = user_info['UID']
+    latitude = request.form['latitude']
+    longitude = request.form['longitude']
+
+    # update location
+    db = get_db()
+    db.cursor().execute("""
+        update Users
+        set U_latitude = ?, U_longitude = ?
+        where UID = ?
+    """, (latitude, longitude, UID))
+    db.commit()
+
+    return redirect(url_for('nav'))
 
 
 def main():
