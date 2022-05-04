@@ -47,6 +47,22 @@ def init_db():
         db.commit()
 
 
+def login_required(function):
+    '''
+    function wrapper that checks login status
+    '''
+    def wrap(*args, **kwargs):
+        user_info = session.get('user_info', None)
+        if user_info is None:
+            # not logged in
+            flash("Please login first")
+            return redirect(url_for("/"))
+        else:
+            # logged in
+            return function(*args, **kwargs)
+    return wrap
+
+
 @app.route("/")
 def home():
     '''
@@ -88,6 +104,7 @@ def login():
 
 
 @app.route("/logout", methods=['POST'])
+@login_required
 def logout():
     session['user_info'] = None
     flash("Logged out")
@@ -205,33 +222,27 @@ def register():
     return redirect(url_for("index"))
 
 
-@ app.route("/nav.html")
+@app.route("/nav.html")
+@login_required
 def nav():
-    user_info = session.get('user_info', None)
-    if user_info is None:
-        # not logged in
-        flash("Please login first")
-        return redirect(url_for("index"))
-    else:
-        # update session info
-        UID = user_info['UID']
-        db = get_db()
-        user_info = db.cursor().execute(
-            """ select *
-                from Users
-                where UID = ?""", (UID,)
-        ).fetchone()
-        session['user_info'] = dict(user_info)
+    # update session info every time
+    user_info = session.get('user_info')
+    UID = user_info['UID']
+    db = get_db()
+    user_info = db.cursor().execute(
+        """ select *
+            from Users
+            where UID = ?""", (UID,)
+    ).fetchone()
+    session['user_info'] = dict(user_info)
+
     return render_template("nav.html", user_info=user_info)
 
 
 @app.route("/edit_location", methods=['POST'])
+@login_required
 def edit_location():
-    user_info = session.get('user_info', None)
-    if user_info is None:
-        # not logged in
-        flash("Please login first")
-        return redirect(url_for("index"))
+    user_info = session.get('user_info')
     UID = user_info['UID']
     latitude = request.form['latitude']
     longitude = request.form['longitude']
