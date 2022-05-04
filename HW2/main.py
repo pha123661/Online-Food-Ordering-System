@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import hashlib
+from functools import wraps
 from flask import (
     Flask, render_template, g, request,
     session, flash, redirect, url_for,
@@ -51,12 +52,13 @@ def login_required(function):
     '''
     function wrapper that checks login status
     '''
+    @wraps(function)
     def wrap(*args, **kwargs):
         user_info = session.get('user_info', None)
         if user_info is None:
             # not logged in
             flash("Please login first")
-            return redirect(url_for("/"))
+            return redirect(url_for("index"))
         else:
             # logged in
             return function(*args, **kwargs)
