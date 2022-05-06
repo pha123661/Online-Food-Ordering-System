@@ -223,7 +223,6 @@ def register():
     flash("Registered Successfully, you may login now")
     return redirect(url_for("index"))
 
-
 @app.route('/get_session', methods = ['GET'])
 def get_session():
     if request.method == 'GET':
@@ -296,8 +295,25 @@ def nav():
     ).fetchone()
     session['user_info'] = dict(user_info)
 
-    return render_template("nav.html", user_info=user_info)
-
+    # fetch shop_info
+    db = get_db()
+    shop_info = db.cursor().execute(
+        """ select *
+            from Stores
+            where S_owner = ?""", (UID,)
+    ).fetchone()
+    
+    '''
+    #print("This is UID", UID)
+    try:
+        session['shop_info'] = dict(shop_info)
+        for row in shop_info:
+            print(row['S_name'])
+    except:
+        print("shop info is none")
+    '''
+    
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info)
 
 @app.route("/edit_location", methods=['POST'])
 @login_required
@@ -318,6 +334,92 @@ def edit_location():
 
     return redirect(url_for('nav'))
 
+@app.route("/shop_register", methods=['POST'])
+@login_required
+def shop_register():
+    # get input values
+    user_info = session.get('user_info')
+    UID = user_info['UID']
+    owner_phone = user_info['U_phone']
+    shop_name = request.form['shop_name']
+    shop_category = request.form['shop_category']
+    shop_latitude = request.form['shop_latitude']
+    shop_longitude = request.form['shop_longitude']
+
+    # check any blanks:
+    for e in (shop_name, shop_category, shop_latitude, shop_longitude):
+        if e == '':
+            flash("Please make sure all fields are filled in")
+            return redirect(url_for("nav"))
+
+    # check formats:
+    # latitude and longitude
+    try:
+        latitude = float(shop_latitude)
+        longitude = float(shop_longitude)
+    except ValueError:
+        flash("Please check: locations can only be float")
+        return redirect(url_for("nav"))
+
+    # store newly registered store informations
+    db = get_db()
+    try:
+        shop_info = db.cursor().execute('''
+            insert into Stores (S_name, S_latitude, S_longitude, S_phone, S_foodtype, S_owner)
+            values (?, ?, ?, ?, ?, ?)
+        ''', (shop_name, latitude, longitude, owner_phone, shop_category, UID))
+        #print(shop_name, latitude, longitude, owner_phone, shop_category, UID)
+    except sqlite3.IntegrityError:
+        flash("shop name has been registered !!")
+        return redirect(url_for("nav"))
+    session['shop_info'] = dict(shop_info)
+    db.commit()
+
+    # change user's type to owner
+    db = get_db()
+    try:
+        user_info = db.cursor().execute('''
+            update Users
+            set U_type = ?
+            where UID = ?
+        ''', (1, UID))
+    except sqlite3.IntegrityError:
+        flash("show owner update failed")
+        return redirect(url_for("nav"))
+    #session['user_info'] = dict(user_info)
+    db.commit()
+
+    # Register successfully
+    flash("Shop registered successfully")
+    return redirect(url_for("nav"))
+
+@app.route("/register-shop_name-check", methods=['POST'])
+def register_shop_name_check():
+    '''
+    checks if shop_name is already registered
+    helper function handling ajax request
+    '''
+    shop_name = request.form.get('shop_name')
+    db = get_db()
+    rst = db.cursor().execute(
+        "select S_name from Stores where S_name = ?", (shop_name,)).fetchone()
+
+    # empty string
+    if shop_name is None or shop_name == '':
+        response = jsonify(
+            '<span style=\'color:red;\'>Please enter your shop name</span>')
+    # account used
+    elif rst:
+        response = jsonify(
+            '<span style=\'color:red;\'>Shop name has been registered</span>')
+    else:
+        response = jsonify(
+            '<span style=\'color:green;\'>Shop name has not been registered</span>')
+
+    # **Important**
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
 
 def main():
     init_db()
