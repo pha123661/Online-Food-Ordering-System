@@ -125,6 +125,7 @@
               <label class="control-label col-sm-1" for="distance">distance</label>
               <div class="col-sm-5">
 
+
                 <select class="form-control" name="sel1">
                   <option>near</option>
                   <option>medium </option>
@@ -140,13 +141,13 @@
               <label class="control-label col-sm-1" for="Price">Price</label>
               <div class="col-sm-2">
 
-                <input type="number" class="form-control" name="price_low" value="0">
+                <input type="number" class="form-control">
 
               </div>
               <label class="control-label col-sm-1" for="~">~</label>
               <div class="col-sm-2">
 
-                <input type="number" class="form-control" name="price_high" value="0">
+                <input type="number" class="form-control">
 
               </div>
               <label class="control-label col-sm-1" for="Meal">Meal</label>
@@ -162,6 +163,7 @@
             <div class="form-group">
               <label class="control-label col-sm-1" for="category"> category</label>
 
+
               <div class="col-sm-5">
                 <input type="text" list="categorys" class="form-control" name="category"
                   placeholder="Enter shop category">
@@ -171,6 +173,7 @@
                 </datalist>
               </div>
               <button type="submit" style="margin-left: 18px;" class="btn btn-primary">Search</button>
+
             </div>
           </form>
         <div id="session_value"></div>
@@ -193,14 +196,12 @@
             $('form.form-horizontal').on('submit', function() {
                 var location = {'U_lat': lat, 'U_lon': lon}
                 var f = $(this), method = f.attr('method'), input_value = {};
-
                 f.find('[name]').each(function(index, value) {
                     var inputs = $(this),
                         name = inputs.attr('name'),
                         value = inputs.val();
                         input_value[name] = value;
                 });
-
                 console.log(Object.assign({}, input_value, location))
                 $.ajax({
                     url: "http://localhost:5000/search-shops",
@@ -217,7 +218,7 @@
                 })
                 return false;
             });
-        </script>  
+        </script>
         </div>
         <div class="row">
           <div class="  col-xs-8">
@@ -282,7 +283,7 @@
                           <tbody>
                             <tr>
                               <th scope="row">1</th>
-                              <td><img src="Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
+                              <td><img src="../static/Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
 
                               <td>Hamburger</td>
 
@@ -293,7 +294,7 @@
                             </tr>
                             <tr>
                               <th scope="row">2</th>
-                              <td><img src="Picture/2.jpg" with="10" heigh="10" alt="coffee"></td>
+                              <td><img src="../static/Picture/2.jpg" with="10" heigh="10" alt="coffee"></td>
 
                               <td>coffee</td>
 
@@ -323,37 +324,91 @@
 
         </div>
       </div>
+      <!-- ADDING REGISTER FOR STORE HERE -->
       <div id="menu1" class="tab-pane fade">
-
-        <h3> Start a business </h3>
-        <div class="form-group ">
-          <div class="row">
-            <div class="col-xs-2">
-              <label for="ex5">shop name</label>
-              <input class="form-control" id="ex5" placeholder="macdonald" type="text">
-            </div>
-            <div class="col-xs-2">
-              <label for="ex5">shop category</label>
-              <input class="form-control" id="ex5" placeholder="fast food" type="text">
-            </div>
-            <div class="col-xs-2">
-              <label for="ex6">latitude</label>
-              <input class="form-control" id="ex6" placeholder="121.00028167648875" type="text">
-            </div>
-            <div class="col-xs-2">
-              <label for="ex8">longitude</label>
-              <input class="form-control" id="ex8" placeholder="24.78472733371133" type="text">
+				<form action="shop_register" method="post" id="register" class="fh5co-form animate-box"
+        data-animate-effect="fadeIn">
+          <h3> Start a business </h3>
+          {% with messages = get_flashed_messages() %}
+					{% if messages %}
+            <script>
+              var messages = "{{ messages | safe }}";
+              alert(messages);
+            </script>
+					<ul class=flashes>
+						{% for message in messages %}
+              <div class="alert alert-warning">
+                <button type="button" class="close" data-dismiss="alert">x</button>
+                {{ message }}
+              </div>
+						{% endfor %}
+					</ul>
+					{% endif %}
+					{% endwith %}
+					{% block body %}{% endblock %}
+          <div class="form-group ">
+            <div class="row">
+              <div class="col-xs-2">
+                <label for="shop_name">shop name</label>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_name" name = "shop_name" placeholder="macdonald" type="text">
+                <div id="msg"></div>
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_name" name = "shop_name" placeholder= "{{shop_info['S_name']}}" type="text" readonly>
+                {% endif %}
+              </div>
+              <div class="col-xs-2">
+                <label for="shop_category">shop category</label>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_category" name = "shop_category" placeholder="fast food" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_category" name = "shop_category" placeholder= "{{shop_info['S_foodtype']}}" type="text" readonly>
+                {% endif %}
+              </div>
+              <div class="col-xs-2">
+                <label for="shop_latitude">latitude</label>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_latitude" name = "shop_latitude" placeholder="121.00028167648875" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_latitude" name = "shop_latitude" placeholder= "{{shop_info['S_latitude']}}" type="text" readonly>
+                {% endif %}
+              </div>
+              <div class="col-xs-2">
+                <label for="shop_longitude">longitude</label>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_longitude" name = "shop_longitude" placeholder="24.78472733371133" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_longitude" name = "shop_longitude" placeholder= "{{shop_info['S_longitude']}}" type="text" readonly>
+                {% endif %}
+              </div>
+              <script type="text/javascript">
+                $('document').ready(function () {
+                  $('#shop_name').on('input', function () {
+                    $.ajax({
+                      url: "http://localhost:5000/register-shop_name-check",
+                      method: "POST",
+                      data: $('#shop_name').serialize(),
+                      async: false,
+                      success: function (data) {
+                        $('#msg').html(data);
+                      },
+                      error: function (jqxhr, textStatus, errorThrown) {
+                        alert("error: " + textStatus)
+                      }
+                    })
+                  });
+                });
+              </script>
             </div>
           </div>
-        </div>
 
-
-
-        <div class=" row" style=" margin-top: 25px;">
-          <div class=" col-xs-3">
-            <button type="button" class="btn btn-primary">register</button>
+          <div class=" row" style=" margin-top: 25px;">
+            <div class=" col-xs-3">
+              <button type="submit" class="btn btn-primary">register</button>
+            </div>
           </div>
-        </div>
+        </form>
+
         <hr>
         <h3>ADD</h3>
 
@@ -409,7 +464,7 @@
               <tbody>
                 <tr>
                   <th scope="row">1</th>
-                  <td><img src="Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
+                  <td><img src="../static/Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
                   <td>Hamburger</td>
 
                   <td>80 </td>
@@ -452,7 +507,7 @@
                 </tr>
                 <tr>
                   <th scope="row">2</th>
-                  <td><img src="Picture/2.jpg" with="10" heigh="10" alt="coffee"></td>
+                  <td><img src="../static/Picture/2.jpg" with="10" heigh="10" alt="coffee"></td>
                   <td>coffee</td>
 
                   <td>50 </td>
