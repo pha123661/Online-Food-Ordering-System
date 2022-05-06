@@ -224,6 +224,64 @@ def register():
     return redirect(url_for("index"))
 
 
+@app.route('/get_session', methods = ['GET'])
+def get_session():
+    if request.method == 'GET':
+        data = {}
+        try:
+            data['user_info'] = session['user_info']
+        except:
+            print('fail to get session')
+        return jsonify(data)
+    else:
+        return jsonify({'user_info': 'nothing'})
+
+
+def fill_null(content, attributes):
+    for attribute in attributes:
+        if content[attribute] == '':
+            content[attribute] = '%'
+    return content
+
+
+def menuSearch(SID, upper, lower):
+    db = get_db()
+    rst = db.cursor().execute('''
+        select P_image, P_name, P_price
+        from Products
+        where P_store = ? and P_price <= upper and P_price >= lower
+        ''', (SID, upper, lower)).fetchall() 
+    return
+
+
+@app.route("/search-shops", methods=['POST'])
+def search_shops():
+    distance = {'medium': 1, 'far': 2}  # adjust the distance standard here
+    search = {i: request.form[i] for i in ['shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
+    search = fill_null(search, ['shop', 'meal', 'category']) # if user don't specify content
+    print(search)
+    db = get_db()
+    rst = db.cursor().execute(f'''
+        with dis(S_name, distance) as (
+            select S_name, case 
+                when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['far']} then 'far'
+                when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['medium']} then 'medium'
+                else 'near'
+            end as distance
+            from Stores)
+        select SID, S_name, S_foodtype, distance
+        from Stores natural join dis
+        where S_name = ? and S_foodtype = ? and distance = ?
+        ''', (search['shop'], search['category'], search['sel1'])).fetchall()   
+    # latitude and longitude are checked, so don't worry about SQL injection
+    table = {'tableRow': []}
+    append = table['tableRow'].append
+    # for SID, S_name, S_foodtype, distance in rst:
+    #     print(SID, S_name, S_foodtype, distance)  # print the result shops for debugging
+    #     append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance, 'menu': menuSearch(SID)})
+    return jsonify(table)
+
+
 @app.route("/nav.html")
 @login_required
 def nav():
