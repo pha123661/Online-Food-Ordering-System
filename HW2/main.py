@@ -2,6 +2,7 @@ import sqlite3
 import os
 import hashlib
 from functools import wraps
+import base64
 from flask import (
     Flask, render_template, g, request,
     session, flash, redirect, url_for,
@@ -312,8 +313,19 @@ def nav():
     except:
         print("shop info is none")
     '''
+
+    # fetch product_info
+    db = get_db()
+    product_info = db.cursor().execute(
+        """ select *
+            from Products
+            where P_owner = ?""", (UID,)
+    ).fetchall()
+
+    image_info = [tple[4].decode("utf-8") for tple in product_info]
+    #print(image_info)
     
-    return render_template("nav.html", user_info=user_info, shop_info=shop_info)
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
 
 @app.route("/edit_location", methods=['POST'])
 @login_required
@@ -420,6 +432,64 @@ def register_shop_name_check():
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
+
+@app.route("/shop_add", methods=['POST'])
+@login_required
+def shop_add():
+    # get input values
+    user_info = session.get('user_info')
+    UID = user_info['UID']
+    meal_name = request.form['meal_name']
+    meal_price = request.form['meal_price']
+    meal_quantity = request.form['meal_quantity']
+    meal_pic = request.files['meal_pic'] # image file
+
+    # check if user is owner
+    if(user_info['U_type'] == 0):
+        flash("Please register your store first")
+        return redirect(url_for("nav"))
+
+    # fetch shop_info
+    db = get_db()
+    shop_info = db.cursor().execute(
+        """ select *
+            from Stores
+            where S_owner = ?""", (UID,)
+    ).fetchone()
+    SID = shop_info['SID']
+
+    # check any blanks:
+    for e in (meal_name, meal_price, meal_quantity, meal_pic.filename):
+        if e == '':
+            flash("Please make sure all fields are filled in")
+            return redirect(url_for("nav"))
+
+    meal_pic_extension = meal_pic.filename.split('.')[1] # get the extension of the file ex: png, jpeg
+
+    # check formats:
+    # price and quantity
+    if(int(meal_price) <0 or int(meal_quantity) <0):
+        flash("Please check: price and quantity can only be non-negatives")
+        return redirect(url_for("nav"))
+
+    # store newly added product informations
+    db = get_db()
+    try:
+        db.cursor().execute('''
+            insert into Products (P_name, P_price, P_quantity, P_image, P_imagetype, P_owner, P_store)
+            values (?, ?, ?, ?, ?, ?, ?)
+        ''', (meal_name, meal_price, meal_quantity, base64.b64encode(meal_pic.read()), meal_pic_extension, UID, SID))
+        print(meal_name, meal_price, meal_quantity, "the pic here", meal_pic_extension, UID, SID)
+    except sqlite3.IntegrityError:
+        print("something went wrong!!")
+        flash(" oops something went wrong!!")
+        return redirect(url_for("nav"))
+    #session['product_info'] = dict(product_info)       # not sure if needed
+    db.commit()
+
+    # Register successfully
+    flash("Product added successfully")
+    return redirect(url_for("nav"))
 
 def main():
     init_db()
