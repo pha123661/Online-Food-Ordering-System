@@ -54,7 +54,9 @@ create table if not exists Products(
     PID INTEGER PRIMARY KEY AUTOINCREMENT,
     P_name varchar(255) NOT NULL,
     P_price int unsigned NOT NULL,
+    P_quantity int unsigned NOT NULL,
     P_image BLOB NOT NULL, -- image encoded by base64
+    P_imagetype varchar(25) NOT NULL,
     P_owner int NOT NULL,
     P_store int NOT NULL,
     foreign key (P_owner) references Users(UID),
