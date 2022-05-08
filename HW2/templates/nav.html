@@ -201,8 +201,8 @@
                   var n, table = '', menu = menu_data[shop.name];
                   $.each(menu, function(i, m) {
                       table += '<tr><th scope="row">' + (i+1) + '</th>';
-                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + btoa(m.P_image) + '"></td>';
-                      // <img src="data:image/jpg;base64,xxxxxxxxxxxxx...">
+                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + atob(m.P_image) + '" style="width: 72px; height: 72px;"></td>';
+                      // <img src="data:image/xxx;base64,xxxxxxxxxxxxx...">
                       table += '<td>' + m.P_name + '</td>'
                       table += '<td>' + m.P_price + '</td>'
                       table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation
@@ -517,7 +517,7 @@
                 {% for row in product_info %}
                 <tr>
                   <th scope="row">{{ loop.index }}</th>
-                  <td><img src="data:image/{{row['P_imagetype']}};base64,{{image_info[loop.index-1]}}" alt="menu_image">
+                  <td><img src="data:image/{{row['P_imagetype']}};base64,{{image_info[loop.index-1]}}" style="width: 72px; height: 72px;" alt="menu_image">
                   </td>
                   <td>{{row['P_name']}}</td>
 

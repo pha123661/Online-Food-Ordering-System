@@ -248,7 +248,6 @@ def fill_null(content, attributes):
 
 def search_menu(SID, upper, lower):
     db = get_db()
-    print(SID, upper, lower)
     rst = db.cursor().execute('''
         select P_image, P_name, P_price, P_quantity, P_imagetype
         from Products
