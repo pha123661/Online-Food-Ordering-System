@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 
 <head>
@@ -223,6 +223,10 @@
                         value = inputs.val();
                         input_value[name] = value;
                 });
+                if (input_value['price_low'] == ''){
+                    console.log('empty A');
+                    input_value['price_low'] = 0
+                }
                 $.ajax({
                     url: "http://localhost:5000/search-shops",
                     method: method,

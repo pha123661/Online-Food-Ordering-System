@@ -242,16 +242,16 @@ def search_menu(SID, upper, lower, meal):
     rst = db.cursor().execute('''
         select P_image, P_name, P_price, P_quantity, P_imagetype
         from Products
-        where P_store = ? and P_price <= ? and P_price >= ? and P_name = ?
+        where P_store = ? and P_price <= ? and P_price >= ? and instr(lower(P_name), lower(?)) > 0
         ''', (SID, upper, lower, meal)).fetchall() 
-    # base64.b64encode(P_image).decode()
+    # instr(a, b) > 0 means if a contains substring b
     return [{'P_image': base64.b64encode(P_image).decode(), 'P_name': P_name, 'P_price': P_price, 'P_quantity': P_quantity, 'P_imagetype': P_imagetype}
             for P_image, P_name, P_price, P_quantity, P_imagetype in rst]
 
 
 @app.route("/search-shops", methods=['POST'])
 def search_shops():
-    distance = {'medium': 1, 'far': 2}  # adjust the distance standard here
+    distance = {'medium': 5, 'far': 10}  # adjust the distance standard here
     search = {i: request.form[i] for i in ['shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
     # print(search)
     db = get_db()
@@ -265,7 +265,7 @@ def search_shops():
             from Stores)
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
-        where instr(lower(S_name), lower(?)) > 0 and lower(S_foodtype) = lower(?) and distance = ?
+        where instr(lower(S_name), lower(?)) > 0 and instr(lower(S_foodtype), lower(?)) > 0 and distance = ?
         ''', (search['shop'], search['category'], search['sel1'])).fetchall()   
     # instr(a, b) > 0 means if a contains substring b
     # latitude and longitude are checked, so don't worry about SQL injection
