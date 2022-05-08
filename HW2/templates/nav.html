@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -82,7 +82,6 @@
                 </div>
               </div>
             </div>
-
 
 
             <!--  -->
@@ -178,83 +177,78 @@
           </form>
           <div id="session_value"></div>
           <script type="text/javascript">
-              var lat = 0.0, lon = 0.0;
-              // get user location
-              $(document).ready(function(){
-                  $.ajax({
-                      url: 'http://127.0.0.1:5000/get_session',
-                      type: 'GET',
-                      dataType: 'json',
-                      success: function(result){
-                          lat = result.user_info['U_latitude']
-                          lon = result.user_info['U_longitude']
-                      },
-                      error: function (jqxhr, textStatus, errorThrown) {
-                          alert("session error: " + textStatus)
-                      }
-                  });
-              })
-
-              var menu_data = {};
-              function updateMealTable(shop){
-                  // console.log(menu_data[shop.name])
-                  var n, table = '', menu = menu_data[shop.name];
-                  $.each(menu, function(i, m) {
-                      table += '<tr><th scope="row">' + (i+1) + '</th>';
-                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + atob(m.P_image) + '" style="width: 72px; height: 72px;"></td>';
-                      // <img src="data:image/xxx;base64,xxxxxxxxxxxxx...">
-                      table += '<td>' + m.P_name + '</td>'
-                      table += '<td>' + m.P_price + '</td>'
-                      table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation
-                      table += '<td><input type="checkbox" id="cbox' + (i+1) + '" value=' + m.P_name + '</td></tr>'
-                  })
-                  $("#menu-update").html(table);
+            var lat = 0.0, lon = 0.0;
+            // get user location
+            $(document).ready(function(){
+                $.ajax({
+                    url: 'http://127.0.0.1:5000/get_session',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(result){
+                        lat = result.user_info['U_latitude']
+                        lon = result.user_info['U_longitude']
+                    },
+                    error: function (jqxhr, textStatus, errorThrown) {
+                        alert("session error: " + textStatus)
+                    }
+                });
+            })
+            var menu_data = {};	
+              function updateMealTable(shop){	
+                  // console.log(menu_data[shop.name])	
+                  var n, table = '', menu = menu_data[shop.name];	
+                  $.each(menu, function(i, m) {	
+                      table += '<tr><th scope="row">' + (i+1) + '</th>';	
+                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + atob(m.P_image) + '" style="width: 72px; height: 72px;"></td>';	
+                      // <img src="data:image/xxx;base64,xxxxxxxxxxxxx...">	
+                      table += '<td>' + m.P_name + '</td>'	
+                      table += '<td>' + m.P_price + '</td>'	
+                      table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation	
+                      table += '<td><input type="checkbox" id="cbox' + (i+1) + '" value=' + m.P_name + '</td></tr>'	
+                  })	
+                  $("#menu-update").html(table);	
+              }	
+              var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',	
+                  shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';	
+                  // note that name is used for menu search (data is stored in menu_data)	
+              function updateShopTable(table_datas){	
+                  var n, table = '';	
+                  $.each(table_datas, function(i, td) {	
+                      table += '<tr><th scope="row">' + (i+1) + '</th>';	
+                      table += '<td>' + td.shop_name + '</td>';	
+                      table += '<td>' + td.foodtype + '</td>';	
+                      table += '<td>' + td.distance + '</td>';	
+                      menu_data[td.shop_name + '_menu'] = td.menu	
+                      table += shop_1 + td.shop_name + shop_2;	
+                  });	
+                  $("#shop-update").html(table);	
               }
-
-              var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',
-                  shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';
-                  // note that name is used for menu search (data is stored in menu_data)
-              function updateShopTable(table_datas){
-                  var n, table = '';
-                  $.each(table_datas, function(i, td) {
-                      table += '<tr><th scope="row">' + (i+1) + '</th>';
-                      table += '<td>' + td.shop_name + '</td>';
-                      table += '<td>' + td.foodtype + '</td>';
-                      table += '<td>' + td.distance + '</td>';
-                      menu_data[td.shop_name + '_menu'] = td.menu
-                      table += shop_1 + td.shop_name + shop_2;
-                  });
-                  $("#shop-update").html(table);
-              }
-
-              $('form.form-horizontal').on('submit', function() {
-                  var location = {'U_lat': lat, 'U_lon': lon}
-                  var f = $(this), method = f.attr('method'), input_value = {};
-
-                  f.find('[name]').each(function(index, value) {
-                      var inputs = $(this),
-                          name = inputs.attr('name'),
-                          value = inputs.val();
-                          input_value[name] = value;
-                  });
-
-                  $.ajax({
-                      url: "http://localhost:5000/search-shops",
-                      method: method,
-                      data: Object.assign({}, input_value, location),
-                      async: false,
-                      success: function (data) {
-                          console.log('success')
-                          for (key in menu_data) delete menu_data[key];
-                          updateShopTable(data.tableRow);
-                      },
-                      error: function (jqxhr, textStatus, errorThrown) {
-                          alert("error: " + textStatus)
-                      }
-                  })
-                  return false;
-              });
-          </script>
+            $('form.form-horizontal').on('submit', function() {
+                var location = {'U_lat': lat, 'U_lon': lon}
+                var f = $(this), method = f.attr('method'), input_value = {};
+                f.find('[name]').each(function(index, value) {
+                    var inputs = $(this),
+                        name = inputs.attr('name'),
+                        value = inputs.val();
+                        input_value[name] = value;
+                });
+                $.ajax({
+                    url: "http://localhost:5000/search-shops",
+                    method: method,
+                    data: Object.assign({}, input_value, location),
+                    async: false,
+                    success: function (data) {
+                      console.log('success')
+                      for (key in menu_data) delete menu_data[key];	
+                        updateShopTable(data.tableRow);
+                    },
+                    error: function (jqxhr, textStatus, errorThrown) {
+                        alert("error: " + textStatus)
+                    }
+                })
+                return false;
+            });
+        </script>
         </div>
         <div class="row">
           <div class="  col-xs-8">
@@ -362,73 +356,59 @@
       </div>
       <!-- ADDING REGISTER FOR STORE HERE -->
       <div id="menu1" class="tab-pane fade">
-        <form action="shop_register" method="post" id="register" class="fh5co-form animate-box"
-          data-animate-effect="fadeIn">
+				<form action="shop_register" method="post" id="register" class="fh5co-form animate-box"
+        data-animate-effect="fadeIn">
           <h3> Start a business </h3>
           {% with messages = get_flashed_messages() %}
-          {% if messages %}
-          <script>
-            var messages = "{{ '\n'.join(messages) | safe }}";
-            alert(messages);
-          </script>
-          <ul class=flashes>
-            {% for message in messages %}
-            <div class="alert alert-warning">
-              <button type="button" class="close" data-dismiss="alert">x</button>
-              {{ message }}
-            </div>
-            {% endfor %}
-          </ul>
-          {% endif %}
-          {% endwith %}
-          {% block body %}{% endblock %}
+					{% if messages %}
+            <script>
+              var messages = "{{ '\n'.join(messages) | safe }}";
+              alert(messages);
+            </script>
+					<ul class=flashes>
+						{% for message in messages %}
+              <div class="alert alert-warning">
+                <button type="button" class="close" data-dismiss="alert">x</button>
+                {{ message }}
+              </div>
+						{% endfor %}
+					</ul>
+					{% endif %}
+					{% endwith %}
+					{% block body %}{% endblock %}
           <div class="form-group ">
             <div class="row">
               <div class="col-xs-2">
                 <label for="shop_name">shop name</label>
-                {% if not user_info['U_type'] %}
-                <!-- if the user is not a shop owner-->
-                <input class="form-control" id="shop_name" name="shop_name" placeholder="macdonald" type="text">
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_name" name = "shop_name" placeholder="macdonald" type="text">
                 <div id="msg"></div>
-                {% else %}
-                <!-- if the user is a shop owner-->
-                <input class="form-control" id="shop_name" name="shop_name" placeholder="{{shop_info['S_name']}}"
-                  type="text" readonly>
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_name" name = "shop_name" placeholder= "{{shop_info['S_name']}}" type="text" readonly>
                 {% endif %}
               </div>
               <div class="col-xs-2">
                 <label for="shop_category">shop category</label>
-                {% if not user_info['U_type'] %}
-                <!-- if the user is not a shop owner-->
-                <input class="form-control" id="shop_category" name="shop_category" placeholder="fast food" type="text">
-                {% else %}
-                <!-- if the user is a shop owner-->
-                <input class="form-control" id="shop_category" name="shop_category"
-                  placeholder="{{shop_info['S_foodtype']}}" type="text" readonly>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_category" name = "shop_category" placeholder="fast food" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_category" name = "shop_category" placeholder= "{{shop_info['S_foodtype']}}" type="text" readonly>
                 {% endif %}
               </div>
               <div class="col-xs-2">
                 <label for="shop_latitude">latitude</label>
-                {% if not user_info['U_type'] %}
-                <!-- if the user is not a shop owner-->
-                <input class="form-control" id="shop_latitude" name="shop_latitude" placeholder="121.00028167648875"
-                  type="text">
-                {% else %}
-                <!-- if the user is a shop owner-->
-                <input class="form-control" id="shop_latitude" name="shop_latitude"
-                  placeholder="{{shop_info['S_latitude']}}" type="text" readonly>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_latitude" name = "shop_latitude" placeholder="24.78472733371133" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_latitude" name = "shop_latitude" placeholder= "{{shop_info['S_latitude']}}" type="text" readonly>
                 {% endif %}
               </div>
               <div class="col-xs-2">
                 <label for="shop_longitude">longitude</label>
-                {% if not user_info['U_type'] %}
-                <!-- if the user is not a shop owner-->
-                <input class="form-control" id="shop_longitude" name="shop_longitude" placeholder="24.78472733371133"
-                  type="text">
-                {% else %}
-                <!-- if the user is a shop owner-->
-                <input class="form-control" id="shop_longitude" name="shop_longitude"
-                  placeholder="{{shop_info['S_longitude']}}" type="text" readonly>
+                {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
+                <input class="form-control" id="shop_longitude" name = "shop_longitude" placeholder="121.00028167648875" type="text">
+                {% else %}  <!-- if the user is a shop owner-->
+                <input class="form-control" id="shop_longitude" name = "shop_longitude" placeholder= "{{shop_info['S_longitude']}}" type="text" readonly>
                 {% endif %}
               </div>
               <script type="text/javascript">
@@ -460,8 +440,8 @@
         </form>
         <!-- SHOP(ADD)  -->
         <hr>
-        <form action="shop_add" method="post" id="shop_add" class="fh5co-form animate-box" data-animate-effect="fadeIn"
-          enctype="multipart/form-data">
+        <form action="shop_add" method="post" id="shop_add" class="fh5co-form animate-box"
+        data-animate-effect="fadeIn" enctype="multipart/form-data">
           <h3>ADD</h3>
 
           <div class="form-group ">
@@ -469,18 +449,18 @@
 
               <div class="col-xs-6">
                 <label for="meal_name">meal name</label>
-                <input class="form-control" id="meal_name" name="meal_name" type="text">
+                <input class="form-control" id="meal_name" name ="meal_name" type="text">
               </div>
             </div>
             <div class="row" style=" margin-top: 15px;">
 
               <div class="col-xs-3">
                 <label for="meal_price">price</label>
-                <input class="form-control" id="meal_price" name="meal_price" type="text">
+                <input class="form-control" id="meal_price" name ="meal_price" type="text">
               </div>
               <div class="col-xs-3">
                 <label for="meal_quantity">quantity</label>
-                <input class="form-control" id="meal_quantity" name="meal_quantity" type="text">
+                <input class="form-control" id="meal_quantity" name = "meal_quantity" type="text">
               </div>
             </div>
 
@@ -515,50 +495,55 @@
               </thead>
               <tbody>
                 {% for row in product_info %}
-                <tr>
-                  <th scope="row">{{ loop.index }}</th>
-                  <td><img src="data:image/{{row['P_imagetype']}};base64,{{image_info[loop.index-1]}}" style="width: 72px; height: 72px;" alt="menu_image">
-                  </td>
-                  <td>{{row['P_name']}}</td>
+                  <tr>
+                    <th scope="row">{{ loop.index }}</th>
+                    <td><img src="data:image/{{row['P_imagetype']}};base64,{{image_info[loop.index-1]}}" style="width: 72px; height: 72px;" alt="menu_image"></td>
+                    <td>{{row['P_name']}}</td>
 
-                  <td>{{row['P_price']}} </td>
-                  <td>{{row['P_quantity']}} </td>
-                  <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#{{row['P_name']}}-1">
-                      Edit
-                    </button></td>
-                  <!-- Modal -->
-                  <div class="modal fade" id="{{row['P_name']}}-1" data-backdrop="static" tabindex="-1" role="dialog"
-                    aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="staticBackdropLabel">{{row['P_name']}} Edit</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          <div class="row">
-                            <div class="col-xs-6">
-                              <label for="ex71">price</label>
-                              <input class="form-control" id="ex71" type="text">
-                            </div>
-                            <div class="col-xs-6">
-                              <label for="ex41">quantity</label>
-                              <input class="form-control" id="ex41" type="text">
-                            </div>
+                    <td>{{row['P_price']}} </td>
+                    <td>{{row['P_quantity']}} </td>
+                    <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#{{row['P_name']}}-1">
+                        Edit
+                      </button></td>
+                    <!-- Modal -->
+                    
+                    <div class="modal fade" id="{{row['P_name']}}-1" data-backdrop="static" tabindex="-1" role="dialog"
+                      aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="staticBackdropLabel">{{row['P_name']}} Edit</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
                           </div>
-
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Edit</button>
-
+                          <form id="edit_price_and_quantity" action="edit_price_and_quantity" method="post">
+                            <div class="modal-body">
+                              <input name="edit_PID" type="hidden" value="{{row['PID']}}">
+                                <div class="row">
+                                  <div class="col-xs-6">
+                                    <label for="edit_price">price</label>
+                                    <input class="form-control" id="edit_price" name="edit_price" type="text">
+                                  </div>
+                                  <div class="col-xs-6">
+                                    <label for="edit_quantity">quantity</label>
+                                    <input class="form-control" id="edit_quantity" name="edit_quantity" type="text">
+                                  </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="submit" class="btn btn-default">Edit</button>
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            </div>
+                          </form>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <td><button type="button" class="btn btn-danger">Delete</button></td>
-                </tr>
+                    <form id="delete_product" action="delete_product" method="post">
+                      <input name="delete_PID" type="hidden" value="{{row['PID']}}">
+                      <td><button type="submit" class="btn btn-danger">Delete</button></td>
+                    </form>
+                  </tr>
                 {% endfor %}
 
               </tbody>
