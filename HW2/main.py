@@ -204,6 +204,9 @@ def register():
     except ValueError:
         flash("Please check: locations can only be float")
         return redirect(url_for("sign_up"))
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        flash("Please check: latitude and longitude must be in range")
+        return redirect(url_for("sign_up"))
 
     # hash password + salt (account) before storing it
     password = hashlib.sha256((password + Account).encode()).hexdigest()
@@ -375,7 +378,7 @@ def shop_register():
         flash("Please check: locations can only be float")
         return redirect(url_for("nav"))
 
-    if(latitude > 90 or latitude < -90 or longitude < -180 or longitude > 180):
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         flash("Please check: locations not possible")
         return redirect(url_for("nav"))
 
