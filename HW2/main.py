@@ -260,18 +260,30 @@ def search_shops():
         'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
     # print(search)
     db = get_db()
-    rst = db.cursor().execute(f'''
+    rst = db.cursor().execute('''
         with dis(SID, distance) as (
             select SID, case 
-                when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['far']} then 'far'
-                when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['medium']} then 'medium'
+                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :far then 'far'
+                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :medium then 'medium'
                 else 'near'
             end as distance
             from Stores)
+        
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
-        where instr(lower(S_name), lower(?)) > 0 and instr(lower(S_foodtype), lower(?)) > 0 and distance = ?
-        ''', (search['shop'], search['category'], search['sel1'])).fetchall()
+
+        where instr(lower(S_name), lower(:shop)) > 0 
+        and instr(lower(S_foodtype), lower(:category)) > 0 
+        and distance = :sel1
+        ''', {
+        'U_lat': search['U_lat'],
+        'U_lon': search['U_lon'],
+        'far': distance['far'],
+        'medium': distance['medium'],
+        'shop': search['shop'],
+        'category': search['category'],
+        'sel1': search['sel1']
+    }).fetchall()
     # instr(a, b) > 0 means if a contains substring b
     # latitude and longitude are checked, so don't worry about SQL injection
     table = {'tableRow': []}
