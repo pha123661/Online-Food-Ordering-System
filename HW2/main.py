@@ -224,7 +224,8 @@ def register():
     flash("Registered Successfully, you may login now")
     return redirect(url_for("index"))
 
-@app.route('/get_session', methods = ['GET'])
+
+@app.route('/get_session', methods=['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -243,7 +244,7 @@ def search_menu(SID, upper, lower, meal):
         select P_image, P_name, P_price, P_quantity, P_imagetype
         from Products
         where P_store = ? and P_price <= ? and P_price >= ? and instr(lower(P_name), lower(?)) > 0
-        ''', (SID, upper, lower, meal)).fetchall() 
+        ''', (SID, upper, lower, meal)).fetchall()
     # instr(a, b) > 0 means if a contains substring b
     return [{'P_image': base64.b64encode(P_image).decode(), 'P_name': P_name, 'P_price': P_price, 'P_quantity': P_quantity, 'P_imagetype': P_imagetype}
             for P_image, P_name, P_price, P_quantity, P_imagetype in rst]
@@ -252,7 +253,8 @@ def search_menu(SID, upper, lower, meal):
 @app.route("/search-shops", methods=['POST'])
 def search_shops():
     distance = {'medium': 5, 'far': 10}  # adjust the distance standard here
-    search = {i: request.form[i] for i in ['shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
+    search = {i: request.form[i] for i in [
+        'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
     # print(search)
     db = get_db()
     rst = db.cursor().execute(f'''
@@ -266,13 +268,13 @@ def search_shops():
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
         where instr(lower(S_name), lower(?)) > 0 and instr(lower(S_foodtype), lower(?)) > 0 and distance = ?
-        ''', (search['shop'], search['category'], search['sel1'])).fetchall()   
+        ''', (search['shop'], search['category'], search['sel1'])).fetchall()
     # instr(a, b) > 0 means if a contains substring b
     # latitude and longitude are checked, so don't worry about SQL injection
     table = {'tableRow': []}
     append = table['tableRow'].append
     for SID, S_name, S_foodtype, distance in rst:
-        append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance, 
+        append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance,
                 'menu': search_menu(SID, search['price_high'], search['price_low'], search['meal'])})
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -301,7 +303,7 @@ def nav():
             from Stores
             where S_owner = ?""", (UID,)
     ).fetchone()
-    
+
     '''
     #print("This is UID", UID)
     try:
@@ -321,9 +323,10 @@ def nav():
     ).fetchall()
 
     image_info = [tple[4].decode("utf-8") for tple in product_info]
-    #print(image_info)
-    
+    # print(image_info)
+
     return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
+
 
 @app.route("/edit_location", methods=['POST'])
 @login_required
@@ -343,6 +346,7 @@ def edit_location():
     db.commit()
 
     return redirect(url_for('nav'))
+
 
 @app.route("/shop_register", methods=['POST'])
 @login_required
@@ -407,6 +411,7 @@ def shop_register():
     flash("Shop registered successfully")
     return redirect(url_for("nav"))
 
+
 @app.route("/register-shop_name-check", methods=['POST'])
 def register_shop_name_check():
     '''
@@ -435,6 +440,7 @@ def register_shop_name_check():
     response.status_code = 200
     return response
 
+
 @app.route("/shop_add", methods=['POST'])
 @login_required
 def shop_add():
@@ -444,7 +450,7 @@ def shop_add():
     meal_name = request.form['meal_name']
     meal_price = request.form['meal_price']
     meal_quantity = request.form['meal_quantity']
-    meal_pic = request.files['meal_pic'] # image file
+    meal_pic = request.files['meal_pic']  # image file
 
     # check if user is owner
     if(user_info['U_type'] == 0):
@@ -466,11 +472,12 @@ def shop_add():
             flash("Please make sure all fields are filled in")
             return redirect(url_for("nav"))
 
-    meal_pic_extension = meal_pic.filename.split('.')[1] # get the extension of the file ex: png, jpeg
+    # get the extension of the file ex: png, jpeg
+    meal_pic_extension = meal_pic.filename.split('.')[1]
 
     # check formats:
     # price and quantity
-    if(int(meal_price) <0 or int(meal_quantity) <0):
+    if(int(meal_price) < 0 or int(meal_quantity) < 0):
         flash("Please check: price and quantity can only be non-negatives")
         return redirect(url_for("nav"))
 
@@ -481,12 +488,13 @@ def shop_add():
             insert into Products (P_name, P_price, P_quantity, P_image, P_imagetype, P_owner, P_store)
             values (?, ?, ?, ?, ?, ?, ?)
         ''', (meal_name, meal_price, meal_quantity, base64.b64encode(meal_pic.read()), meal_pic_extension, UID, SID))
-        print(meal_name, meal_price, meal_quantity, "the pic here", meal_pic_extension, UID, SID)
+        print(meal_name, meal_price, meal_quantity,
+              "the pic here", meal_pic_extension, UID, SID)
     except sqlite3.IntegrityError:
         print("something went wrong!!")
         flash(" oops something went wrong!!")
         return redirect(url_for("nav"))
-    #session['product_info'] = dict(product_info)       # not sure if needed
+    # session['product_info'] = dict(product_info)       # not sure if needed
     db.commit()
 
     # Register successfully
@@ -508,7 +516,7 @@ def edit_price_and_quantity():
 
     # check formats:
     # price and quantity
-    if(int(edit_price) <0 or int(edit_quantity) <0):
+    if(int(edit_price) < 0 or int(edit_quantity) < 0):
         flash("Please check: price and quantity can only be non-negatives")
         return redirect(url_for("nav"))
 
@@ -542,6 +550,7 @@ def delete_product():
 
     flash("Delete Successful")
     return redirect(url_for('nav'))
+
 
 def main():
     init_db()
