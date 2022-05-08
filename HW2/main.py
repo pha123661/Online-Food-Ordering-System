@@ -12,6 +12,9 @@ from flask import (
 DATABASE = "HWDB.db"
 SCHEMA = 'schema.sql'
 
+# distance boundary
+DISTANCE_BOUNDARY = {'medium': 5, 'far': 10}
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(99)
 
@@ -255,12 +258,13 @@ def search_menu(SID, upper, lower, meal):
 
 @app.route("/search-shops", methods=['POST'])
 def search_shops():
-    distance = {'medium': 5, 'far': 10}  # adjust the distance standard here
     search = {i: request.form[i] for i in [
         'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
-    # print(search)
+    search['medium'] = DISTANCE_BOUNDARY['medium']
+    search['far'] = DISTANCE_BOUNDARY['far']
     db = get_db()
-    rst = db.cursor().execute('''
+    rst = db.cursor().execute(
+        '''
         with dis(SID, distance) as (
             select SID, case 
                 when SQRT(POW(S_latitude - :U_lat, 2)) + SQRT(POW(S_longitude - :U_lon, 2)) >= :far then 'far'
@@ -275,15 +279,9 @@ def search_shops():
         where instr(lower(S_name), lower(:shop)) > 0 
         and instr(lower(S_foodtype), lower(:category)) > 0 
         and distance = :sel1
-        ''', {
-        'U_lat': search['U_lat'],
-        'U_lon': search['U_lon'],
-        'far': distance['far'],
-        'medium': distance['medium'],
-        'shop': search['shop'],
-        'category': search['category'],
-        'sel1': search['sel1']
-    }).fetchall()
+        ''',
+        search
+    ).fetchall()
     # instr(a, b) > 0 means if a contains substring b
     # latitude and longitude are checked, so don't worry about SQL injection
     table = {'tableRow': []}
