@@ -1,7 +1,6 @@
 import sqlite3
 import os
 import hashlib
-import base64
 from functools import wraps
 import base64
 from flask import (
@@ -225,8 +224,7 @@ def register():
     flash("Registered Successfully, you may login now")
     return redirect(url_for("index"))
 
-
-@app.route('/get_session', methods=['GET'])
+@app.route('/get_session', methods = ['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -303,7 +301,7 @@ def nav():
             from Stores
             where S_owner = ?""", (UID,)
     ).fetchone()
-
+    
     '''
     #print("This is UID", UID)
     try:
@@ -323,10 +321,9 @@ def nav():
     ).fetchall()
 
     image_info = [tple[4].decode("utf-8") for tple in product_info]
-    # print(image_info)
-
+    #print(image_info)
+    
     return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
-
 
 @app.route("/edit_location", methods=['POST'])
 @login_required
@@ -346,7 +343,6 @@ def edit_location():
     db.commit()
 
     return redirect(url_for('nav'))
-
 
 @app.route("/shop_register", methods=['POST'])
 @login_required
@@ -373,6 +369,10 @@ def shop_register():
         longitude = float(shop_longitude)
     except ValueError:
         flash("Please check: locations can only be float")
+        return redirect(url_for("nav"))
+
+    if(latitude > 90 or latitude < -90 or longitude < -180 or longitude > 180):
+        flash("Please check: locations not possible")
         return redirect(url_for("nav"))
 
     # store newly registered store informations
@@ -407,7 +407,6 @@ def shop_register():
     flash("Shop registered successfully")
     return redirect(url_for("nav"))
 
-
 @app.route("/register-shop_name-check", methods=['POST'])
 def register_shop_name_check():
     '''
@@ -436,7 +435,6 @@ def register_shop_name_check():
     response.status_code = 200
     return response
 
-
 @app.route("/shop_add", methods=['POST'])
 @login_required
 def shop_add():
@@ -446,7 +444,7 @@ def shop_add():
     meal_name = request.form['meal_name']
     meal_price = request.form['meal_price']
     meal_quantity = request.form['meal_quantity']
-    meal_pic = request.files['meal_pic']  # image file
+    meal_pic = request.files['meal_pic'] # image file
 
     # check if user is owner
     if(user_info['U_type'] == 0):
@@ -468,12 +466,11 @@ def shop_add():
             flash("Please make sure all fields are filled in")
             return redirect(url_for("nav"))
 
-    # get the extension of the file ex: png, jpeg
-    meal_pic_extension = meal_pic.filename.split('.')[1]
+    meal_pic_extension = meal_pic.filename.split('.')[1] # get the extension of the file ex: png, jpeg
 
     # check formats:
     # price and quantity
-    if(int(meal_price) < 0 or int(meal_quantity) < 0):
+    if(int(meal_price) <0 or int(meal_quantity) <0):
         flash("Please check: price and quantity can only be non-negatives")
         return redirect(url_for("nav"))
 
@@ -484,19 +481,67 @@ def shop_add():
             insert into Products (P_name, P_price, P_quantity, P_image, P_imagetype, P_owner, P_store)
             values (?, ?, ?, ?, ?, ?, ?)
         ''', (meal_name, meal_price, meal_quantity, base64.b64encode(meal_pic.read()), meal_pic_extension, UID, SID))
-        print(meal_name, meal_price, meal_quantity,
-              "the pic here", meal_pic_extension, UID, SID)
+        print(meal_name, meal_price, meal_quantity, "the pic here", meal_pic_extension, UID, SID)
     except sqlite3.IntegrityError:
         print("something went wrong!!")
         flash(" oops something went wrong!!")
         return redirect(url_for("nav"))
-    # session['product_info'] = dict(product_info)       # not sure if needed
+    #session['product_info'] = dict(product_info)       # not sure if needed
     db.commit()
 
     # Register successfully
     flash("Product added successfully")
     return redirect(url_for("nav"))
 
+
+@app.route("/edit_price_and_quantity", methods=['POST'])
+def edit_price_and_quantity():
+    edit_price = request.form['edit_price']
+    edit_quantity = request.form['edit_quantity']
+    edit_PID = request.form['edit_PID']
+
+    # check any blanks:
+    for e in (edit_price, edit_quantity):
+        if e == '':
+            flash("Please make sure all fields are filled in")
+            return redirect(url_for("nav"))
+
+    # check formats:
+    # price and quantity
+    if(int(edit_price) <0 or int(edit_quantity) <0):
+        flash("Please check: price and quantity can only be non-negatives")
+        return redirect(url_for("nav"))
+
+    # update price & quantity
+    db = get_db()
+    db.cursor().execute("""
+        update Products
+        set P_price = ?, P_quantity = ?
+        where PID = ?
+    """, (edit_price, edit_quantity, edit_PID))
+    print("edit_PID: ", edit_PID)
+    db.commit()
+
+    flash("Edit Successful")
+    return redirect(url_for('nav'))
+
+
+@app.route("/delete_product", methods=['POST'])
+def delete_product():
+    print("In delete_product")
+    delete_PID = request.form['delete_PID']
+
+    # delete product from Products db
+    db = get_db()
+    db.cursor().execute("""
+        delete from Products
+        where PID = ?
+    """, (delete_PID))
+    print("delete_PID: ", delete_PID)
+    db.commit()
+
+    flash("Delete Successful")
+    return redirect(url_for('nav'))
 
 def main():
     init_db()
