@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import hashlib
+import base64
 from functools import wraps
 import base64
 from flask import (
@@ -245,29 +246,28 @@ def fill_null(content, attributes):
     return content
 
 
-def menuSearch(SID, upper, lower):
+def search_menu(SID, upper, lower):
     db = get_db()
+    print(SID, upper, lower)
     rst = db.cursor().execute('''
-        select P_image, P_name, P_price
+        select P_image, P_name, P_price, P_quantity, P_imagetype
         from Products
-        where P_store = ? and P_price <= upper and P_price >= lower
-        ''', (SID, upper, lower)).fetchall()
-    return
+        where P_store = ? and P_price <= ? and P_price >= ?
+        ''', (SID, upper, lower)).fetchall() 
+    # base64.b64encode(P_image).decode()
+    return [{'P_image': base64.b64encode(P_image).decode(), 'P_name': P_name, 'P_price': P_price, 'P_quantity': P_quantity, 'P_imagetype': P_imagetype}
+            for P_image, P_name, P_price, P_quantity, P_imagetype in rst]
 
 
 @app.route("/search-shops", methods=['POST'])
 def search_shops():
     distance = {'medium': 1, 'far': 2}  # adjust the distance standard here
-    search = {i: request.form[i] for i in [
-        'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
-    # if user don't specify content
-    search = fill_null(search, ['shop', 'meal', 'category'])
-    print(search)
+    search = {i: request.form[i] for i in ['shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
+    search = fill_null(search, ['shop', 'meal', 'category']) # if user don't specify content
     db = get_db()
-    # latitude and longitude are checked, so don't worry about SQL injection
     rst = db.cursor().execute(f'''
-        with dis(S_name, distance) as (
-            select S_name, case 
+        with dis(SID, distance) as (
+            select SID, case 
                 when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['far']} then 'far'
                 when ABS(S_latitude - {search['U_lat']}) + ABS(S_longitude - {search['U_lat']}) >= {distance['medium']} then 'medium'
                 else 'near'
@@ -276,13 +276,18 @@ def search_shops():
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
         where S_name = ? and S_foodtype = ? and distance = ?
-        ''', (search['shop'], search['category'], search['sel1'])).fetchall()
+        ''', (search['shop'], search['category'], search['sel1'])).fetchall()   
+    # latitude and longitude are checked, so don't worry about SQL injection
     table = {'tableRow': []}
     append = table['tableRow'].append
-    # for SID, S_name, S_foodtype, distance in rst:
-    #     print(SID, S_name, S_foodtype, distance)  # print the result shops for debugging
-    #     append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance, 'menu': menuSearch(SID)})
-    return jsonify(table)
+    for SID, S_name, S_foodtype, distance in rst:
+        # print(SID, S_name, S_foodtype, distance)  # print the result shops for debugging
+        append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance, 
+                'menu': search_menu(SID, search['price_high'], search['price_low'])})
+    response = jsonify(table)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
 
 
 @app.route("/nav.html")

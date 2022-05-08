@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 
 <head>
@@ -141,13 +141,13 @@
               <label class="control-label col-sm-1" for="Price">Price</label>
               <div class="col-sm-2">
 
-                <input type="number" class="form-control">
+                <input type="number" class="form-control" name = "price_low" value="0">
 
               </div>
               <label class="control-label col-sm-1" for="~">~</label>
               <div class="col-sm-2">
 
-                <input type="number" class="form-control">
+                <input type="number" class="form-control" name = "price_high" value="0">
 
               </div>
               <label class="control-label col-sm-1" for="Meal">Meal</label>
@@ -178,46 +178,82 @@
           </form>
           <div id="session_value"></div>
           <script type="text/javascript">
-            var lat = 0.0, lon = 0.0;
-            $(document).ready(function () {
-              $.ajax({
-                url: 'http://127.0.0.1:5000/get_session',
-                type: 'GET',
-                dataType: 'json',
-                success: function (result) {
-                  lat = result.user_info['U_latitude']
-                  lon = result.user_info['U_longitude']
-                },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert("session error: " + textStatus)
-                }
-              });
-            })
-            $('form.form-horizontal').on('submit', function () {
-              var location = { 'U_lat': lat, 'U_lon': lon }
-              var f = $(this), method = f.attr('method'), input_value = {};
-              f.find('[name]').each(function (index, value) {
-                var inputs = $(this),
-                  name = inputs.attr('name'),
-                  value = inputs.val();
-                input_value[name] = value;
-              });
-              console.log(Object.assign({}, input_value, location))
-              $.ajax({
-                url: "http://localhost:5000/search-shops",
-                method: method,
-                data: Object.assign({}, input_value, location),
-                async: false,
-                success: function (data) {
-                  alert('succ')
-                  // $('#msg').html(data);
-                },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert("error: " + textStatus)
-                }
+              var lat = 0.0, lon = 0.0;
+              // get user location
+              $(document).ready(function(){
+                  $.ajax({
+                      url: 'http://127.0.0.1:5000/get_session',
+                      type: 'GET',
+                      dataType: 'json',
+                      success: function(result){
+                          lat = result.user_info['U_latitude']
+                          lon = result.user_info['U_longitude']
+                      },
+                      error: function (jqxhr, textStatus, errorThrown) {
+                          alert("session error: " + textStatus)
+                      }
+                  });
               })
-              return false;
-            });
+
+              var menu_data = {};
+              function updateMealTable(shop){
+                  // console.log(menu_data[shop.name])
+                  var n, table = '', menu = menu_data[shop.name];
+                  $.each(menu, function(i, m) {
+                      table += '<tr><th scope="row">' + (i+1) + '</th>';
+                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + btoa(m.P_image) + '"></td>';
+                      // <img src="data:image/jpg;base64,xxxxxxxxxxxxx...">
+                      table += '<td>' + m.P_name + '</td>'
+                      table += '<td>' + m.P_price + '</td>'
+                      table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation
+                      table += '<td><input type="checkbox" id="cbox' + (i+1) + '" value=' + m.P_name + '</td></tr>'
+                  })
+                  $("#menu-update").html(table);
+              }
+
+              var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',
+                  shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';
+                  // note that name is used for menu search (data is stored in menu_data)
+              function updateShopTable(table_datas){
+                  var n, table = '';
+                  $.each(table_datas, function(i, td) {
+                      table += '<tr><th scope="row">' + (i+1) + '</th>';
+                      table += '<td>' + td.shop_name + '</td>';
+                      table += '<td>' + td.foodtype + '</td>';
+                      table += '<td>' + td.distance + '</td>';
+                      menu_data[td.shop_name + '_menu'] = td.menu
+                      table += shop_1 + td.shop_name + shop_2;
+                  });
+                  $("#shop-update").html(table);
+              }
+
+              $('form.form-horizontal').on('submit', function() {
+                  var location = {'U_lat': lat, 'U_lon': lon}
+                  var f = $(this), method = f.attr('method'), input_value = {};
+
+                  f.find('[name]').each(function(index, value) {
+                      var inputs = $(this),
+                          name = inputs.attr('name'),
+                          value = inputs.val();
+                          input_value[name] = value;
+                  });
+
+                  $.ajax({
+                      url: "http://localhost:5000/search-shops",
+                      method: method,
+                      data: Object.assign({}, input_value, location),
+                      async: false,
+                      success: function (data) {
+                          console.log('success')
+                          for (key in menu_data) delete menu_data[key];
+                          updateShopTable(data.tableRow);
+                      },
+                      error: function (jqxhr, textStatus, errorThrown) {
+                          alert("error: " + textStatus)
+                      }
+                  })
+                  return false;
+              });
           </script>
         </div>
         <div class="row">
@@ -233,7 +269,7 @@
 
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="shop-update">
                 <tr>
                   <th scope="row">1</th>
 
@@ -251,7 +287,7 @@
             </table>
 
             <!-- Modal -->
-            <div class="modal fade" id="macdonald" data-backdrop="static" tabindex="-1" role="dialog"
+            <div class="modal fade" id="menu" data-backdrop="static" tabindex="-1" role="dialog"
               aria-labelledby="staticBackdropLabel" aria-hidden="true">
               <div class="modal-dialog">
 
@@ -280,7 +316,7 @@
                               <th scope="col">Order check</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody id="menu-update">
                             <tr>
                               <th scope="row">1</th>
                               <td><img src="../static/Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
