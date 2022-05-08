@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -429,7 +429,11 @@
 
           <div class=" row" style=" margin-top: 25px;">
             <div class=" col-xs-3">
+              {% if not user_info['U_type'] %} <!-- if the user is not a shop owner-->
               <button type="submit" class="btn btn-primary">register</button>
+              {% else %}  <!-- if the user is a shop owner-->
+              <button type="button" class="btn btn-primary" disabled>register</button>
+              {% endif %}
             </div>
           </div>
         </form>
@@ -512,6 +516,7 @@
                               <span aria-hidden="true">&times;</span>
                             </button>
                           </div>
+                          <!-- EDIT PRODUCT -->
                           <form id="edit_price_and_quantity" action="edit_price_and_quantity" method="post">
                             <div class="modal-body">
                               <input name="edit_PID" type="hidden" value="{{row['PID']}}">
@@ -534,6 +539,7 @@
                         </div>
                       </div>
                     </div>
+                    <!-- DELETE PRODUCT -->
                     <form id="delete_product" action="delete_product" method="post">
                       <input name="delete_PID" type="hidden" value="{{row['PID']}}">
                       <td><button type="submit" class="btn btn-danger">Delete</button></td>
