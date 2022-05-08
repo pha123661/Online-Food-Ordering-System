@@ -239,20 +239,13 @@ def get_session():
         return jsonify({'user_info': 'nothing'})
 
 
-def fill_null(content, attributes):
-    for attribute in attributes:
-        if content[attribute] == '':
-            content[attribute] = '%'
-    return content
-
-
-def search_menu(SID, upper, lower):
+def search_menu(SID, upper, lower, meal):
     db = get_db()
     rst = db.cursor().execute('''
         select P_image, P_name, P_price, P_quantity, P_imagetype
         from Products
-        where P_store = ? and P_price <= ? and P_price >= ?
-        ''', (SID, upper, lower)).fetchall() 
+        where P_store = ? and P_price <= ? and P_price >= ? and P_name = ?
+        ''', (SID, upper, lower, meal)).fetchall() 
     # base64.b64encode(P_image).decode()
     return [{'P_image': base64.b64encode(P_image).decode(), 'P_name': P_name, 'P_price': P_price, 'P_quantity': P_quantity, 'P_imagetype': P_imagetype}
             for P_image, P_name, P_price, P_quantity, P_imagetype in rst]
@@ -262,7 +255,7 @@ def search_menu(SID, upper, lower):
 def search_shops():
     distance = {'medium': 1, 'far': 2}  # adjust the distance standard here
     search = {i: request.form[i] for i in ['shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
-    search = fill_null(search, ['shop', 'meal', 'category']) # if user don't specify content
+    # print(search)
     db = get_db()
     rst = db.cursor().execute(f'''
         with dis(SID, distance) as (
@@ -274,15 +267,15 @@ def search_shops():
             from Stores)
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
-        where S_name = ? and S_foodtype = ? and distance = ?
+        where instr(lower(S_name), lower(?)) > 0 and lower(S_foodtype) = lower(?) and distance = ?
         ''', (search['shop'], search['category'], search['sel1'])).fetchall()   
+    # instr(a, b) > 0 means if a contains substring b
     # latitude and longitude are checked, so don't worry about SQL injection
     table = {'tableRow': []}
     append = table['tableRow'].append
     for SID, S_name, S_foodtype, distance in rst:
-        # print(SID, S_name, S_foodtype, distance)  # print the result shops for debugging
         append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance, 
-                'menu': search_menu(SID, search['price_high'], search['price_low'])})
+                'menu': search_menu(SID, search['price_high'], search['price_low'], search['meal'])})
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
