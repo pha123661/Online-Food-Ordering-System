@@ -267,8 +267,8 @@ def search_shops():
         '''
         with dis(SID, distance) as (
             select SID, case 
-                when SQRT(POW(S_latitude - :U_lat, 2) + POW(S_longitude - :U_lon, 2)) >= :far then 'far'
-                when SQRT(POW(S_latitude - :U_lat, 2) + POW(S_longitude - :U_lon, 2)) >= :medium then 'medium'
+                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :far then 'far'
+                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :medium then 'medium'
                 else 'near'
             end as distance
             from Stores)

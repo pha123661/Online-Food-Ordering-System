@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 
 <head>
@@ -166,7 +166,6 @@
 
             </div>
           </form>
-          <div id="session_value"></div>
           <script type="text/javascript">
             var lat = 0.0, lon = 0.0;
             // get user location
@@ -185,35 +184,35 @@
                 });
             })
             var menu_data = {};	
-              function updateMealTable(shop){	
-                  // console.log(menu_data[shop.name])	
-                  var n, table = '', menu = menu_data[shop.name];	
-                  $.each(menu, function(i, m) {	
-                      table += '<tr><th scope="row">' + (i+1) + '</th>';	
-                      table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + atob(m.P_image) + '" style="width: 72px; height: 72px;"></td>';	
-                      // <img src="data:image/xxx;base64,xxxxxxxxxxxxx...">	
-                      table += '<td>' + m.P_name + '</td>'	
-                      table += '<td>' + m.P_price + '</td>'	
-                      table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation	
-                      table += '<td><input type="checkbox" id="cbox' + (i+1) + '" value=' + m.P_name + '</td></tr>'	
-                  })	
-                  $("#menu-update").html(table);	
-              }	
-              var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',	
-                  shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';	
-                  // note that name is used for menu search (data is stored in menu_data)	
-              function updateShopTable(table_datas){	
-                  var n, table = '';	
-                  $.each(table_datas, function(i, td) {	
-                      table += '<tr><th scope="row">' + (i+1) + '</th>';	
-                      table += '<td>' + td.shop_name + '</td>';	
-                      table += '<td>' + td.foodtype + '</td>';	
-                      table += '<td>' + td.distance + '</td>';	
-                      menu_data[td.shop_name + '_menu'] = td.menu	
-                      table += shop_1 + td.shop_name + shop_2;	
-                  });	
-                  $("#shop-update").html(table);	
-              }
+            function updateMealTable(shop){	
+                // console.log(menu_data[shop.name])	
+                var n, table = '', menu = menu_data[shop.name];	
+                $.each(menu, function(i, m) {	
+                    table += '<tr><th scope="row">' + (i+1) + '</th>';	
+                    table += '<td><img src="data:image/' + m.P_imagetype + ';base64,' + atob(m.P_image) + '" style="width: 72px; height: 72px;"></td>';	
+                    // <img src="data:image/xxx;base64,xxxxxxxxxxxxx...">	
+                    table += '<td>' + m.P_name + '</td>'	
+                    table += '<td>' + m.P_price + '</td>'	
+                    table += '<td>' + m.P_quantity + '</td>'  // TODO: add quantity calculation	
+                    table += '<td><input type="checkbox" id="cbox' + (i+1) + '" value=' + m.P_name + '</td></tr>'	
+                })	
+                $("#menu-update").html(table);	
+            }	
+            var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',	
+                shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';	
+                // note that name is used for menu search (data is stored in menu_data)	
+            function updateShopTable(table_datas){	
+                var n, table = '';	
+                $.each(table_datas, function(i, td) {	
+                    table += '<tr><th scope="row">' + (i+1) + '</th>';	
+                    table += '<td>' + td.shop_name + '</td>';	
+                    table += '<td>' + td.foodtype + '</td>';	
+                    table += '<td>' + td.distance + '</td>';	
+                    menu_data[td.shop_name + '_menu'] = td.menu	
+                    table += shop_1 + td.shop_name + shop_2;	
+                });	
+                $("#shop-update").html(table);	
+            }
             $('form.form-horizontal').on('submit', function() {
                 var location = {'U_lat': lat, 'U_lon': lon}
                 var f = $(this), method = f.attr('method'), input_value = {};
@@ -243,7 +242,7 @@
                 })
                 return false;
             });
-        </script>
+          </script>
         </div>
         <div class="row">
           <div class="  col-xs-8">
