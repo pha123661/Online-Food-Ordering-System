@@ -199,7 +199,8 @@
                 $("#menu-update").html(table);	
             }	
             var shop_1 = '<td><button type="button" data-toggle="modal" data-target="#menu" name="',	
-                shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>';	
+                shop_2 = '_menu" class="btn btn-info " onclick="updateMealTable(this)">Open menu</button></td></tr>',
+                shop_data = {};	
                 // note that name is used for menu search (data is stored in menu_data)	
             function updateShopTable(table_datas){	
                 var n, table = '';	
@@ -212,6 +213,16 @@
                     table += shop_1 + td.shop_name + shop_2;	
                 });	
                 $("#shop-update").html(table);	
+            }
+            var page_1 = '<li class="page-item"><a class="page-link" href="#">',
+                page_2 = '</a></li>'
+            function updatePage(max_pages){
+                page = '<li class="page-item"><a class="page-link" href="#">pre</a></li>'
+                for(var i = 1; i <= max_pages; i++){
+                    page += page_1 + i + page_2
+                }
+                page += '<li class="page-item"><a class="page-link" href="#">nxt</a></li>'
+                $("#page-update").html(page);
             }
             $('form.form-horizontal').on('submit', function() {
                 var location = {'U_lat': lat, 'U_lon': lon}
@@ -232,9 +243,10 @@
                     data: Object.assign({}, input_value, location),
                     async: false,
                     success: function (data) {
-                      console.log('success')
-                      for (key in menu_data) delete menu_data[key];	
+                        for (key in menu_data) delete menu_data[key];	
+                        shop_data = data.tableRow
                         updateShopTable(data.tableRow);
+                        updatePage(Math.ceil(shop_data.length / 5));
                     },
                     error: function (jqxhr, textStatus, errorThrown) {
                         alert("error: " + textStatus)
@@ -344,6 +356,11 @@
 
               </div>
             </div>
+            <ul class="pagination" id="page-update">
+              <li class="page-item"><a class="page-link" href="#">pre</a></li>
+              <li class="page-item"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">nxt</a></li>
+            </ul>
           </div>
 
         </div>
