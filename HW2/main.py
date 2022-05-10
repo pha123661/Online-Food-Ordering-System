@@ -168,9 +168,9 @@ def register():
         return redirect(url_for("sign_up"))
 
     # check any blanks:
-    for e in (Account, password, name, latitude, longitude, phonenumber):
-        if e == '':
-            flash("Please make sure all fields are filled in")
+    for k, v in request.form.items():
+        if v == '':
+            flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("sign_up"))
 
     # check formats:
@@ -374,9 +374,9 @@ def shop_register():
     shop_longitude = request.form['shop_longitude']
 
     # check any blanks:
-    for e in (shop_name, shop_category, shop_latitude, shop_longitude):
-        if e == '':
-            flash("Please make sure all fields are filled in")
+    for k, v in request.form.items():
+        if v == '':
+            flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("nav"))
 
     # check formats:
@@ -480,9 +480,9 @@ def shop_add():
     SID = shop_info['SID']
 
     # check any blanks:
-    for e in (meal_name, meal_price, meal_quantity, meal_pic.filename):
-        if e == '':
-            flash("Please make sure all fields are filled in")
+    for k, v in request.form.items():
+        if v == '':
+            flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("nav"))
 
     # get the extension of the file ex: png, jpeg
@@ -522,9 +522,9 @@ def edit_price_and_quantity():
     edit_PID = request.form['edit_PID']
 
     # check any blanks:
-    for e in (edit_price, edit_quantity):
-        if e == '':
-            flash("Please make sure all fields are filled in")
+    for k, v in request.form.items():
+        if v == '':
+            flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("nav"))
 
     # check formats:
