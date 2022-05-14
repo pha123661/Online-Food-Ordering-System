@@ -159,13 +159,26 @@
 
             <div class="form-group">
               <label class="control-label col-sm-1" for="category"> category</label>
-
-
               <div class="col-sm-5">
                 <input type="text" class="form-control" name="category" placeholder="Enter shop category">
               </div>
-              <button type="submit" style="margin-left: 18px;" class="btn btn-primary">Search</button>
 
+              <label class="control-label col-sm-1" for="order">ordering</label>
+              <div class="col-sm-5">
+                <select class="form-control" name="ordering">
+                  <option>shop</option>
+                  <option>distance </option>
+                  <option>category</option>
+                </select>
+              </div>
+
+            </div>
+            <div class="form-group">
+              <label class="control-label col-sm-1" for="desc order">desc order</label>
+              <div class="col-sm-5">
+                <input type="checkbox" class="form-check-input" id="desc">
+              </div>
+              <button type="submit" style="margin-left: 18px;" class="btn btn-primary">Search</button>
             </div>
           </form>
           <script type="text/javascript">
@@ -250,6 +263,7 @@
               });
               return
             }
+            var hash_table = {"shop": 'S_name', "distance": 'distance', "category": 'S_foodtype'}
             $('form.form-horizontal').on('submit', function () {
               var location = { 'U_lat': lat, 'U_lon': lon }
               var f = $(this), method = f.attr('method'), input_value = {};
@@ -260,9 +274,10 @@
                 input_value[name] = value;
               });
               if (input_value['price_low'] == '') {
-                console.log('empty A');
                 input_value['price_low'] = 0
               }
+              input_value['ordering'] = hash_table[input_value['ordering']]
+              input_value['desc'] = document.getElementById("desc").checked
               $.ajax({
                 url: "http://localhost:5000/search-shops",
                 method: method,

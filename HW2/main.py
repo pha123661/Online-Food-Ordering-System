@@ -260,11 +260,12 @@ def search_menu(SID, upper, lower, meal):
 def search_shops():
     search = {i: request.form[i] for i in [
         'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
+    desc = 'desc' if request.form["desc"] == 'true' else ''
     search['medium'] = DISTANCE_BOUNDARY['medium']
     search['far'] = DISTANCE_BOUNDARY['far']
     db = get_db()
     rst = db.cursor().execute(
-        '''
+        f'''
         with dis(SID, distance) as (
             select SID, case
                 when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :far then 'far'
@@ -278,11 +279,12 @@ def search_shops():
         where instr(lower(S_name), lower(:shop)) > 0
         and instr(lower(S_foodtype), lower(:category)) > 0
         and distance like :sel1
-        ''',
+        order by {request.form['ordering']}
+        ''' + desc,
         search
     ).fetchall()
     # instr(a, b) > 0 means if a contains substring b
-    # latitude and longitude are checked, so don't worry about SQL injection
+    # latitude and longitude are checked, ordering is a list(user can only select), so don't worry about SQL injection
     table = {'tableRow': []}
     append = table['tableRow'].append
     for SID, S_name, S_foodtype, distance in rst:
