@@ -278,7 +278,7 @@ def search_shops():
 
         where instr(lower(S_name), lower(:shop)) > 0 
         and instr(lower(S_foodtype), lower(:category)) > 0 
-        and distance = :sel1
+        and distance = :sel1    
         ''',
         search
     ).fetchall()
@@ -287,8 +287,11 @@ def search_shops():
     table = {'tableRow': []}
     append = table['tableRow'].append
     for SID, S_name, S_foodtype, distance in rst:
-        append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance,
-                'menu': search_menu(SID, search['price_high'], search['price_low'], search['meal'])})
+        menu = search_menu(
+            SID, search['price_high'], search['price_low'], search['meal'])
+        if menu:
+            append({'shop_name': S_name, 'foodtype': S_foodtype, 'distance': distance,
+                    'menu': menu})
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
