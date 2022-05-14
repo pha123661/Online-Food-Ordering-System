@@ -231,7 +231,7 @@ def register():
     return redirect(url_for("index"))
 
 
-@app.route('/get_session', methods=['GET'])
+@app.route('/get_session', methods = ['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -266,19 +266,18 @@ def search_shops():
     rst = db.cursor().execute(
         '''
         with dis(SID, distance) as (
-            select SID, case 
+            select SID, case
                 when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :far then 'far'
                 when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :medium then 'medium'
                 else 'near'
             end as distance
             from Stores)
-        
+
         select SID, S_name, S_foodtype, distance
         from Stores natural join dis
-
-        where instr(lower(S_name), lower(:shop)) > 0 
-        and instr(lower(S_foodtype), lower(:category)) > 0 
-        and distance = :sel1    
+        where instr(lower(S_name), lower(:shop)) > 0
+        and instr(lower(S_foodtype), lower(:category)) > 0
+        and distance = :sel1
         ''',
         search
     ).fetchall()
@@ -320,16 +319,6 @@ def nav():
             where S_owner = ?""", (UID,)
     ).fetchone()
 
-    '''
-    #print("This is UID", UID)
-    try:
-        session['shop_info'] = dict(shop_info)
-        for row in shop_info:
-            print(row['S_name'])
-    except:
-        print("shop info is none")
-    '''
-
     # fetch product_info
     db = get_db()
     product_info = db.cursor().execute(
@@ -351,6 +340,10 @@ def edit_location():
     UID = user_info['UID']
     latitude = request.form['latitude']
     longitude = request.form['longitude']
+
+    if not (-90 <= int(latitude) <= 90 and -180 <= int(longitude) <= 180):
+        flash("Please check: locations not possible")
+        return redirect(url_for("nav"))
 
     # update location
     db = get_db()
@@ -466,7 +459,7 @@ def shop_add():
     meal_name = request.form['meal_name']
     meal_price = request.form['meal_price']
     meal_quantity = request.form['meal_quantity']
-    meal_pic = request.files['meal_pic']  # image file
+    meal_pic = request.files['meal_pic']    # image file
 
     # check if user is owner
     if(user_info['U_type'] == 0):
@@ -487,6 +480,9 @@ def shop_add():
         if v == '':
             flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("nav"))
+    if(meal_pic.filename == ''):
+        flash("Please upload a picture for the product")
+        return redirect(url_for("nav"))
 
     # get the extension of the file ex: png, jpeg
     meal_pic_extension = meal_pic.filename.split('.')[1]
@@ -504,13 +500,11 @@ def shop_add():
             insert into Products (P_name, P_price, P_quantity, P_image, P_imagetype, P_owner, P_store)
             values (?, ?, ?, ?, ?, ?, ?)
         ''', (meal_name, meal_price, meal_quantity, base64.b64encode(meal_pic.read()), meal_pic_extension, UID, SID))
-        print(meal_name, meal_price, meal_quantity,
-              "the pic here", meal_pic_extension, UID, SID)
     except sqlite3.IntegrityError:
-        print("something went wrong!!")
+        #print("something went wrong!!")
         flash(" oops something went wrong!!")
         return redirect(url_for("nav"))
-    # session['product_info'] = dict(product_info)       # not sure if needed
+    #session['product_info'] = dict(product_info)       # not sure if needed
     db.commit()
 
     # Register successfully
@@ -520,6 +514,7 @@ def shop_add():
 
 @app.route("/edit_price_and_quantity", methods=['POST'])
 def edit_price_and_quantity():
+    #print("inside edit_price_and_quantity")
     edit_price = request.form['edit_price']
     edit_quantity = request.form['edit_quantity']
     edit_PID = request.form['edit_PID']
@@ -543,7 +538,7 @@ def edit_price_and_quantity():
         set P_price = ?, P_quantity = ?
         where PID = ?
     """, (edit_price, edit_quantity, edit_PID))
-    print("edit_PID: ", edit_PID)
+    #print("edit_PID: ", edit_PID)
     db.commit()
 
     flash("Edit Successful")
@@ -552,7 +547,7 @@ def edit_price_and_quantity():
 
 @app.route("/delete_product", methods=['POST'])
 def delete_product():
-    print("In delete_product")
+    #print("In delete_product")
     delete_PID = request.form['delete_PID']
 
     # delete product from Products db
@@ -560,8 +555,8 @@ def delete_product():
     db.cursor().execute("""
         delete from Products
         where PID = ?
-    """, (delete_PID))
-    print("delete_PID: ", delete_PID)
+    """, (delete_PID,))
+    #print("delete_PID: ", delete_PID)
     db.commit()
 
     flash("Delete Successful")
