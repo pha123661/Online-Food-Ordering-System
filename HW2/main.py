@@ -231,7 +231,7 @@ def register():
     return redirect(url_for("index"))
 
 
-@app.route('/get_session', methods = ['GET'])
+@app.route('/get_session', methods=['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -277,7 +277,7 @@ def search_shops():
         from Stores natural join dis
         where instr(lower(S_name), lower(:shop)) > 0
         and instr(lower(S_foodtype), lower(:category)) > 0
-        and distance = :sel1
+        and distance like :sel1
         ''',
         search
     ).fetchall()
@@ -504,7 +504,7 @@ def shop_add():
         #print("something went wrong!!")
         flash(" oops something went wrong!!")
         return redirect(url_for("nav"))
-    #session['product_info'] = dict(product_info)       # not sure if needed
+    # session['product_info'] = dict(product_info)       # not sure if needed
     db.commit()
 
     # Register successfully
