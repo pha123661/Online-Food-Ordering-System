@@ -266,16 +266,21 @@ def search_shops():
     db = get_db()
     rst = db.cursor().execute(
         f'''
-        with dis(SID, distance) as (
-            select SID, case
-                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :far then 'far'
-                when ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) >= :medium then 'medium'
-                else 'near'
-            end as distance
-            from Stores)
+        with dis(SID, manhattan) as (
+                select SID, ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) as manhattan
+                from Stores
+            ),
+            dis_cat(SID, distance) as (
+                select SID, case 
+                    when manhattan >= :far then 'far'
+                    when manhattan >= :medium then 'medium'
+                    else 'near'
+                end as distance
+                from Stores natural join dis
+            )
 
         select SID, S_name, S_foodtype, distance
-        from Stores natural join dis
+        from Stores natural join dis natural join dis_cat
         where instr(lower(S_name), lower(:shop)) > 0
         and instr(lower(S_foodtype), lower(:category)) > 0
         and distance like :sel1

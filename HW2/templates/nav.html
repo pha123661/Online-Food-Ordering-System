@@ -263,7 +263,7 @@
               });
               return
             }
-            var hash_table = {"shop": 'S_name', "distance": 'distance', "category": 'S_foodtype'}
+            var hash_table = {"shop": 'S_name', "distance": 'manhattan', "category": 'S_foodtype'}
             $('form.form-horizontal').on('submit', function () {
               var location = { 'U_lat': lat, 'U_lon': lon }
               var f = $(this), method = f.attr('method'), input_value = {};
