@@ -1,3 +1,3 @@
 # NYCU-2022Spring-DB_intro
+Introduction to database by Jiun-Long Huang  
 Team6  
-Introduction to database by Jiun-Long Huang
