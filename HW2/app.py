@@ -572,7 +572,7 @@ def delete_product():
 
 def main():
     init_db()
-    app.run(debug=True)
+    app.run('0.0.0.0', debug=True)
 
 
 if __name__ == '__main__':
