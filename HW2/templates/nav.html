@@ -186,15 +186,16 @@
             // get user location
             $(document).ready(function () {
               $.ajax({
-                url: 'http://127.0.0.1:5000/get_session',
+                url: 'http://' + window.location.host + '/get_session',
                 type: 'GET',
                 dataType: 'json',
                 success: function (result) {
                   lat = result.user_info['U_latitude']
                   lon = result.user_info['U_longitude']
                 },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert("session error: " + textStatus)
+                error: function (xhr, status, error) {
+                  var err = eval("(" + xhr.responseText + ")");
+                  alert(err.Message + '\n' + 'http://' + window.location.host + '/get_session');
                 }
               });
             })
@@ -263,7 +264,7 @@
               });
               return
             }
-            var hash_table = {"shop": 'S_name', "distance": 'manhattan', "category": 'S_foodtype'}
+            var hash_table = { "shop": 'S_name', "distance": 'manhattan', "category": 'S_foodtype' }
             $('form.form-horizontal').on('submit', function () {
               var location = { 'U_lat': lat, 'U_lon': lon }
               var f = $(this), method = f.attr('method'), input_value = {};
@@ -279,7 +280,7 @@
               input_value['ordering'] = hash_table[input_value['ordering']]
               input_value['desc'] = document.getElementById("desc").checked
               $.ajax({
-                url: "http://localhost:5000/search-shops",
+                url: 'http://' + window.location.host + "/search-shops",
                 method: method,
                 data: Object.assign({}, input_value, location),
                 async: false,
@@ -470,7 +471,7 @@
                 $('document').ready(function () {
                   $('#shop_name').on('input', function () {
                     $.ajax({
-                      url: "http://localhost:5000/register-shop_name-check",
+                      url: 'http://' + window.location.host + "/register-shop_name-check",
                       method: "POST",
                       data: $('#shop_name').serialize(),
                       async: false,

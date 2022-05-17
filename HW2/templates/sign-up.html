@@ -134,7 +134,7 @@
 				$('document').ready(function () {
 					$('#Account').on('input', function () {
 						$.ajax({
-							url: "http://localhost:5000/register-account-check",
+							url: 'http://' + window.location.host + "/register-account-check",
 							method: "POST",
 							data: $('#Account').serialize(),
 							async: false,
