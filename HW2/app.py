@@ -348,6 +348,19 @@ def edit_location():
     latitude = request.form['latitude']
     longitude = request.form['longitude']
 
+    # check any blanks:
+    for k, v in request.form.items():
+        if v == '':
+            flash(f"Please check: '{k}' is not filled")
+            return redirect(url_for("nav"))
+
+    # check validity
+    try:
+        latitude, longitude = float(latitude), float(longitude)
+    except ValueError:
+        flash("Please check: locations can only be float")
+        return redirect(url_for("nav"))
+
     if not (-90 <= int(latitude) <= 90 and -180 <= int(longitude) <= 180):
         flash("Please check: locations not possible")
         return redirect(url_for("nav"))
