@@ -565,12 +565,12 @@
 
                   <td>{{row['P_price']}} </td>
                   <td>{{row['P_quantity']}} </td>
-                  <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#{{row['P_name']}}-1">
+                  <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#{{ loop.index }}">
                       Edit
                     </button></td>
                   <!-- Modal -->
 
-                  <div class="modal fade" id="{{row['P_name']}}-1" data-backdrop="static" tabindex="-1" role="dialog"
+                  <div class="modal fade" id="{{ loop.index }}" data-backdrop="static" tabindex="-1" role="dialog"
                     aria-labelledby="staticBackdropLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                       <div class="modal-content">
