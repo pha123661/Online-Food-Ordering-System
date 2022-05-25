@@ -157,7 +157,7 @@ def order_preview():
     # return redirect(url_for('nav'))
 
 
-@ app.route("/login", methods=['POST'])
+@app.route("/login", methods=['POST'])
 def login():
     Account = request.form['Account']
     password = request.form['password']
@@ -181,20 +181,20 @@ def login():
         return redirect(url_for('nav'))
 
 
-@ app.route("/logout", methods=['POST'])
-@ login_required
+@app.route("/logout", methods=['POST'])
+@login_required
 def logout():
     session['user_info'] = None
     flash("Logged out")
     return redirect(url_for('index'))
 
 
-@ app.route("/sign-up.html")
+@app.route("/sign-up.html")
 def sign_up():
     return render_template("sign-up.html")
 
 
-@ app.route("/register-account-check", methods=['POST'])
+@app.route("/register-account-check", methods=['POST'])
 def register_account_check():
     '''
     checks if account is already registered
@@ -223,7 +223,7 @@ def register_account_check():
     return response
 
 
-@ app.route("/register", methods=['POST'])
+@app.route("/register", methods=['POST'])
 def register():
     # get input values
     name = request.form['name']
@@ -303,7 +303,7 @@ def register():
     return redirect(url_for("index"))
 
 
-@ app.route('/get_session', methods=['GET'])
+@app.route('/get_session', methods=['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -331,7 +331,7 @@ def search_menu(SID, upper, lower, meal):
     return rst
 
 
-@ app.route("/search-shops", methods=['POST'])
+@app.route("/search-shops", methods=['POST'])
 def search_shops():
     search = {i: request.form[i] for i in [
         'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
@@ -379,8 +379,8 @@ def search_shops():
     return response
 
 
-@ app.route("/nav.html")
-@ login_required
+@app.route("/nav.html")
+@login_required
 def nav():
     # update session info every time
     user_info = session.get('user_info')
