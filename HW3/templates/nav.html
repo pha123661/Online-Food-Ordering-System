@@ -37,14 +37,17 @@
   <div class="container">
 
     <ul class="nav nav-tabs">
-      <li class="active"><a href="#home">Home</a></li>
-      <li><a href="#menu1">shop</a></li>
+      <li class="active"><a href="#Home">Home</a></li>
+      <li><a href="#Shop">Shops</a></li>
+      <li><a href="#MyOrder">My Orders</a></li>
+      <li><a href="#ShopOrder">Shop Orders</a></li>
+      <li><a href="#TsRecord">Transaction Records</a></li>
 
 
     </ul>
 
     <div class="tab-content">
-      <div id="home" class="tab-pane fade in active">
+      <div id="Home" class="tab-pane fade in active">
         <h3>Profile</h3>
         <div class="row">
           <div class="col-xs-12">
@@ -301,7 +304,7 @@
         </div>
         <div class="row">
           <div class="  col-xs-8">
-            <table class="table" style=" margin-top: 15px;">
+            <table class="table" style="margin-top: 15px;">
               <thead>
                 <tr>
                   <th scope="col">#</th>
@@ -348,37 +351,14 @@
                             </tr>
                           </thead>
                           <tbody id="menu-update">
-                            <tr>
-                              <th scope="row">1</th>
-                              <td><img src="../static/Picture/1.jpg" with="50" heigh="10" alt="Hamburger"></td>
-
-                              <td>Hamburger</td>
-
-                              <td>80 </td>
-                              <td>20 </td>
-
-                              <td> <input type="checkbox" id="cbox1" value="Hamburger"></td>
-                            </tr>
-                            <tr>
-                              <th scope="row">2</th>
-                              <td><img src="../static/Picture/2.jpg" with="10" heigh="10" alt="coffee"></td>
-
-                              <td>coffee</td>
-
-                              <td>50 </td>
-                              <td>20</td>
-
-                              <td><input type="checkbox" id="cbox2" value="coffee"></td>
-                            </tr>
-
+                            <!-- To be added -->
                           </tbody>
                         </table>
                       </div>
 
                     </div>
 
-
-                    <!--  -->
+                    <!-- Order button  -->
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Order</button>
@@ -397,7 +377,7 @@
         </div>
       </div>
       <!-- ADDING REGISTER FOR STORE HERE -->
-      <div id="menu1" class="tab-pane fade">
+      <div id="Shop" class="tab-pane fade">
         <form action="shop_register" method="post" id="register" class="fh5co-form animate-box"
           data-animate-effect="fadeIn">
           <h3> Start a business </h3>
@@ -620,7 +600,266 @@
 
       </div>
 
+      <!-- MyOrder -->
+      <div id="MyOrder" class="tab-pane fade">
+        <h3>My Orders</h3>
+        <!-- HOW-TO: Filter table rows based on selected value
+          https://stackoverflow.com/questions/41554154/filter-table-rows-based-on-select-value -->
+        <select class="form-control" name="Status" style="width:150px; ">
+          <option>All</option>
+          <option>Finished</option>
+          <option>Not finished</option>
+          <option>Called</option>
+        </select>
+        <div class="row">
+          <div class="col-xs-8">
+            <table class="table" style="margin-top: 15px;">
+              <thead>
+                <tr>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Start Time</th>
+                  <th scope="col">End Time</th>
+                  <th scope="col">Shop Name</th>
+                  <th scope="col">Total Price</th>
+                  <th scope="col">Order Details</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="MyOrder">
+                <!-- for loop1 should start here -->
+                <tr>
+                  <th scope="row">1</th>
+                  <td>
+                    tmp2
+                  </td>
+                  <td>
+                    tmp3
+                  </td>
+                  <td>
+                    tmp4
+                  </td>
+                  <td>
+                    tmp5
+                  </td>
+                  <td>
+                    tmp6
+                  </td>
+                  <td>
+                    <button type="button" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info ">Order
+                      Details</button>
+                  </td>
+                  <td>
+                    <button type="button" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
+                      onclick="none">Cancel Order</button>
+                  </td>
+                </tr>
+                <!-- for loop1 should end here -->
+              </tbody>
+            </table>
+            <!-- for loop2 should start here -->
+            <!-- Modal: MyOrderDetail-{id} -->
+            <div class="modal fade" id="MyOrderDetail-1" data-backdrop="static" tabindex="-1" role="dialog"
+              aria-labelledby="staticBackdropLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Order Detail #1</h4>
+                  </div>
+                  <div class="modal-body">
+                    <table class="table">
+                      <thread>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Picture</th>
+                          <th scope="col">Meal name</th>
+                          <th scope="col">Price</th>
+                          <th scope="col">Quantity</th>
+                        </tr>
+                      </thread>
+                      <tbody id="MyOrderDetail-T-1">
+                        <tr>
+                          <th scope="row">1</th>
+                          <td>tmp11</td>
+                          <td>tmp12</td>
+                          <td>tmp13</td>
+                          <td>tmp14</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">2</th>
+                          <td>tmp21</td>
+                          <td>tmp22</td>
+                          <td>tmp23</td>
+                          <td>tmp24</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p class="text-right">Subtotal $199</p>
+                    <!-- EX: row['subtotal'] -->
+                    <p class="text-right"><small><em>Delivery fee $19</em></small></p>
+                    <p class="text-right">Total Price $218</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- for loop2 should end here -->
+          </div>
+        </div>
+      </div>
 
+      <!-- Shop Orders -->
+      <div id="ShopOrder" class="tab-pane fade">
+        <h3>Shop Orders</h3>
+        <select class="form-control" name="Status" style="width:150px; ">
+          <option>All</option>
+          <option>Finished</option>
+          <option>Not finished</option>
+          <option>Called</option>
+        </select>
+        <div class="row">
+          <div class="col-xs-8">
+            <table class="table" style="margin-top: 15px;">
+              <thead>
+                <tr>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Start Time</th>
+                  <th scope="col">End Time</th>
+                  <th scope="col">Shop Name</th>
+                  <th scope="col">Total Price</th>
+                  <th scope="col">Order Details</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ShopOrder">
+                <!-- for loop1 should start here -->
+                <tr>
+                  <th scope="row">1</th>
+                  <td>
+                    tmp2
+                  </td>
+                  <td>
+                    tmp3
+                  </td>
+                  <td>
+                    tmp4
+                  </td>
+                  <td>
+                    tmp5
+                  </td>
+                  <td>
+                    tmp6
+                  </td>
+                  <td>
+                    <button type="button" data-toggle="modal" data-target="#ShopOrderDetail-1"
+                      class="btn btn-info ">Order Details</button>
+                  </td>
+                  <td>
+                    <button type="button" data-toggle="modal" data-target="test" name="test" class="btn btn-success "
+                      onclick="none">Done</button>
+                    <button type="button" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
+                      onclick="none">Cancel</button>
+                  </td>
+                </tr>
+                <!-- for loop1 should end here -->
+              </tbody>
+            </table>
+            <!-- for loop2 should start here -->
+            <!-- Modal: ShopOrderDetail-{id} -->
+            <div class="modal fade" id="ShopOrderDetail-1" data-backdrop="static" tabindex="-1" role="dialog"
+              aria-labelledby="staticBackdropLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Order Detail #1</h4>
+                  </div>
+                  <div class="modal-body">
+                    <table class="table">
+                      <thread>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Picture</th>
+                          <th scope="col">Meal name</th>
+                          <th scope="col">Price</th>
+                          <th scope="col">Quantity</th>
+                        </tr>
+                      </thread>
+                      <tbody id="ShopOrderDetail-T-1">
+                        <tr>
+                          <th scope="row">1</th>
+                          <td>tmp11</td>
+                          <td>tmp12</td>
+                          <td>tmp13</td>
+                          <td>tmp14</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">2</th>
+                          <td>tmp21</td>
+                          <td>tmp22</td>
+                          <td>tmp23</td>
+                          <td>tmp24</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p class="text-right">Subtotal $200</p>
+                    <!-- EX: row['subtotal'] -->
+                    <p class="text-right"><small><em>Delivery fee $0</em></small></p>
+                    <p class="text-right">Total Price $200</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- for loop2 should end here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Transacrion Records -->
+      <div id="TsRecord" class="tab-pane fade">
+        <h3>Transacrion Records</h3>
+        <select class="form-control" name="Status" style="width:150px; ">
+          <option>All</option>
+          <option>Payment</option>
+          <option>Recieve</option>
+          <option>Recharge</option>
+        </select>
+        <div class="row">
+          <div class="col-xs-8">
+            <table class="table" style="margin-top: 15px;">
+              <thead>
+                <tr>
+                  <th scope="col">Record ID</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Time</th>
+                  <th scope="col">Trader</th>
+                  <th scope="col">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="order-update">
+                <tr>
+                  <td>
+                    tmp1
+                  </td>
+                  <td>
+                    tmp2
+                  </td>
+                  <td>
+                    tmp3
+                  </td>
+                  <td>
+                    tmp4
+                  </td>
+                  <td>
+                    tmp5
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
