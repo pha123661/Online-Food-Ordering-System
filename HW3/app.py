@@ -1,19 +1,22 @@
-import sqlite3
 import os
+import math
+import base64
+import sqlite3
 import hashlib
 from functools import wraps
-import base64
 from flask import (
     Flask, render_template, g, request,
     session, flash, redirect, url_for,
     json, jsonify,
 )
 
+sqlite3.enable_callback_tracebacks(True)
+
 DATABASE = "HWDB.db"
 SCHEMA = 'schema.sql'
 
 # distance boundary
-DISTANCE_BOUNDARY = {'medium': 5, 'far': 10}
+DISTANCE_BOUNDARY = {'medium': 200, 'far': 600}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(99)
@@ -27,6 +30,7 @@ def get_db():
     if db is None:
         db = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
+        db.create_function('_GIO_DIS', 4, _distance_between_locations)
         g._database = db
     return db
 
@@ -50,6 +54,31 @@ def init_db():
         with app.open_resource(SCHEMA, mode='r') as f:
             db.cursor().executescript(f.read())  # executescript can run multiple commands
         db.commit()
+
+
+def _distance_between_locations(lat1, lon1, lat2, lon2):
+    '''
+    calculates distance between two locations
+    '''
+
+    # approximate radius of earth in km
+    R = 6373.0
+
+    lat1 = math.radians(float(lat1))
+    lon1 = math.radians(float(lon1))
+    lat2 = math.radians(float(lat2))
+    lon2 = math.radians(float(lon2))
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * \
+        math.cos(lat2) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = R * c
+
+    return str(distance)
 
 
 def login_required(function):
@@ -85,7 +114,51 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/login", methods=['POST'])
+@app.route("/order_made", methods=['POST'])
+def order_made():
+    '''
+    called when any order has been made
+    '''
+    try:
+        PIDs = request.form.getlist('PIDs')
+        Quantities = [int(n) for n in request.form.getlist('Quantities')]
+    except:
+        flash("Please check: order content must be valid")
+        return redirect(url_for('nav'))
+
+    if sum(Quantities) <= 0:
+        flash("Failed to create order: please select at least on product")
+        return redirect(url_for('nav'))
+
+    print(request.form)
+    flash("Order created successfully!")
+    return redirect(url_for('nav'))
+
+
+@app.route("/order_preview", methods=['POST'])
+def order_preview():
+    '''
+    called before any order has been made
+    caculates the price
+    '''
+    try:
+        PIDs = request.form.getlist('PIDs')
+        Quantities = [int(n) for n in request.form.getlist('Quantities')]
+    except:
+        flash("Please check: order content must be valid")
+        return redirect(url_for('nav'))
+
+    if sum(Quantities) <= 0:
+        flash("Failed to create order: please select at least on product")
+        return redirect(url_for('nav'))
+
+    print(request.form)
+    flash("Order created successfully!")
+    return 'SSS'
+    # return redirect(url_for('nav'))
+
+
+@ app.route("/login", methods=['POST'])
 def login():
     Account = request.form['Account']
     password = request.form['password']
@@ -109,20 +182,20 @@ def login():
         return redirect(url_for('nav'))
 
 
-@app.route("/logout", methods=['POST'])
-@login_required
+@ app.route("/logout", methods=['POST'])
+@ login_required
 def logout():
     session['user_info'] = None
     flash("Logged out")
     return redirect(url_for('index'))
 
 
-@app.route("/sign-up.html")
+@ app.route("/sign-up.html")
 def sign_up():
     return render_template("sign-up.html")
 
 
-@app.route("/register-account-check", methods=['POST'])
+@ app.route("/register-account-check", methods=['POST'])
 def register_account_check():
     '''
     checks if account is already registered
@@ -151,7 +224,7 @@ def register_account_check():
     return response
 
 
-@app.route("/register", methods=['POST'])
+@ app.route("/register", methods=['POST'])
 def register():
     # get input values
     name = request.form['name']
@@ -231,7 +304,7 @@ def register():
     return redirect(url_for("index"))
 
 
-@app.route('/get_session', methods=['GET'])
+@ app.route('/get_session', methods=['GET'])
 def get_session():
     if request.method == 'GET':
         data = {}
@@ -247,16 +320,19 @@ def get_session():
 def search_menu(SID, upper, lower, meal):
     db = get_db()
     rst = db.cursor().execute('''
-        select P_image, P_name, P_price, P_quantity, P_imagetype
+        select *
         from Products
         where P_store = ? and P_price <= ? and P_price >= ? and instr(lower(P_name), lower(?)) > 0
         ''', (SID, upper, lower, meal)).fetchall()
     # instr(a, b) > 0 means if a contains substring b
-    return [{'P_image': base64.b64encode(P_image).decode(), 'P_name': P_name, 'P_price': P_price, 'P_quantity': P_quantity, 'P_imagetype': P_imagetype}
-            for P_image, P_name, P_price, P_quantity, P_imagetype in rst]
+
+    rst = [dict(r) for r in rst]
+    for r in rst:
+        r['P_image'] = base64.b64encode(r['P_image']).decode()
+    return rst
 
 
-@app.route("/search-shops", methods=['POST'])
+@ app.route("/search-shops", methods=['POST'])
 def search_shops():
     search = {i: request.form[i] for i in [
         'shop', 'sel1', 'price_low', 'price_high', 'meal', 'category', 'U_lat', 'U_lon']}
@@ -266,14 +342,14 @@ def search_shops():
     db = get_db()
     rst = db.cursor().execute(
         f'''
-        with dis(SID, manhattan) as (
-                select SID, ABS(S_latitude - :U_lat) + ABS(S_longitude - :U_lon) as manhattan
+        with dis(SID, gio_dis) as (
+                select SID, _GIO_DIS(S_latitude, S_longitude, :U_lat, :U_lon) as gio_dis
                 from Stores
             ),
             dis_cat(SID, distance) as (
-                select SID, case 
-                    when manhattan >= :far then 'far'
-                    when manhattan >= :medium then 'medium'
+                select SID, case
+                    when gio_dis >= :far then 'far'
+                    when gio_dis >= :medium then 'medium'
                     else 'near'
                 end as distance
                 from Stores natural join dis
@@ -304,8 +380,8 @@ def search_shops():
     return response
 
 
-@app.route("/nav.html")
-@login_required
+@ app.route("/nav.html")
+@ login_required
 def nav():
     # update session info every time
     user_info = session.get('user_info')
@@ -415,7 +491,7 @@ def shop_register():
             insert into Stores (S_name, S_latitude, S_longitude, S_phone, S_foodtype, S_owner)
             values (?, ?, ?, ?, ?, ?)
         ''', (shop_name, latitude, longitude, owner_phone, shop_category, UID))
-        #print(shop_name, latitude, longitude, owner_phone, shop_category, UID)
+        # print(shop_name, latitude, longitude, owner_phone, shop_category, UID)
     except sqlite3.IntegrityError:
         flash("shop name has been registered !!")
         return redirect(url_for("nav"))
@@ -433,7 +509,7 @@ def shop_register():
     except sqlite3.IntegrityError:
         flash("show owner update failed")
         return redirect(url_for("nav"))
-    #session['user_info'] = dict(user_info)
+    # session['user_info'] = dict(user_info)
     db.commit()
 
     # Register successfully
@@ -521,7 +597,7 @@ def shop_add():
             values (?, ?, ?, ?, ?, ?, ?)
         ''', (meal_name, meal_price, meal_quantity, base64.b64encode(meal_pic.read()), meal_pic_extension, UID, SID))
     except sqlite3.IntegrityError:
-        #print("something went wrong!!")
+        # print("something went wrong!!")
         flash(" oops something went wrong!!")
         return redirect(url_for("nav"))
     # session['product_info'] = dict(product_info)       # not sure if needed
@@ -534,7 +610,7 @@ def shop_add():
 
 @app.route("/edit_price_and_quantity", methods=['POST'])
 def edit_price_and_quantity():
-    #print("inside edit_price_and_quantity")
+    # print("inside edit_price_and_quantity")
     edit_price = request.form['edit_price']
     edit_quantity = request.form['edit_quantity']
     edit_PID = request.form['edit_PID']
@@ -558,7 +634,7 @@ def edit_price_and_quantity():
         set P_price = ?, P_quantity = ?
         where PID = ?
     """, (edit_price, edit_quantity, edit_PID))
-    #print("edit_PID: ", edit_PID)
+    # print("edit_PID: ", edit_PID)
     db.commit()
 
     flash("Edit Successful")
@@ -567,7 +643,7 @@ def edit_price_and_quantity():
 
 @app.route("/delete_product", methods=['POST'])
 def delete_product():
-    #print("In delete_product")
+    # print("In delete_product")
     delete_PID = request.form['delete_PID']
 
     # delete product from Products db
@@ -576,7 +652,7 @@ def delete_product():
         delete from Products
         where PID = ?
     """, (delete_PID,))
-    #print("delete_PID: ", delete_PID)
+    # print("delete_PID: ", delete_PID)
     db.commit()
 
     flash("Delete Successful")
