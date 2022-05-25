@@ -119,20 +119,18 @@ def order_made():
     '''
     called when any order has been made
     '''
-    try:
-        PIDs = request.form.getlist('PIDs')
-        Quantities = [int(n) for n in request.form.getlist('Quantities')]
-    except:
-        flash("Please check: order content must be valid")
-        return redirect(url_for('nav'))
+    print(request.json)
+    # try:
+    #     PIDs = request.form.getlist('PIDs')
+    #     Quantities = [int(n) for n in request.form.getlist('Quantities')]
+    # except:
+    #     flash("Please check: order content must be valid")
+    #     return redirect(url_for('nav'))
 
-    if sum(Quantities) <= 0:
-        flash("Failed to create order: please select at least on product")
-        return redirect(url_for('nav'))
+    # if sum(Quantities) <= 0:
+    #     flash("Failed to create order: please select at least on product")
+    #     return redirect(url_for('nav'))
 
-    print(request.form)
-    flash("Order created successfully!")
-    return redirect(url_for('nav'))
 
 
 @app.route("/order_preview", methods=['POST'])
@@ -142,19 +140,57 @@ def order_preview():
     caculates the price
     '''
     try:
-        PIDs = request.form.getlist('PIDs')
-        Quantities = [int(n) for n in request.form.getlist('Quantities')]
-    except:
-        return jsonify(message='Please check: order content must be valid'), 500
+        PIDs = []
+        Quantities = []
 
-    if sum(Quantities) <= 0:
-        return jsonify(message='Failed to create order: please select at least on product'), 500
+        for PID, Q in zip(request.form.getlist('PIDs'), request.form.getlist('Quantities')):
+            Q = 0 if Q == '' else int(Q)
+            if Q > 0:
+                PIDs.append(PID)
+                Quantities.append(Q)
+
+        if len(Quantities) == 0:
+            return jsonify('Failed to create order: please select at least on product'), 500
+    except ValueError:
+        return jsonify('Please check: order content must be valid'), 500
+
+    # query product infos
+    db = get_db()
+    db.cursor().execute("""
+        create temp table PID_list(PID INTEGER PRIMARY KEY)
+    """)
+    for P in PIDs:
+        db.cursor().execute("""
+        insert into PID_list values (?)
+        """, (P, ))
+
+    rst = db.cursor().execute("""
+    select * from PID_list natural join Products
+    """).fetchall()
+
+    # decode image + calculate price
+    assert len(rst) == len(Quantities)
+    Products = [dict(r) for r in rst]
+
+    Subtotal = 0
+    for r, q in zip(Products, Quantities):
+        r['P_image'] = base64.b64encode(r['P_image']).decode()
+        r['Order_quantity'] = q
+        Subtotal += r['P_price'] * q
+
+    # calculate fee
+    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
+                                     (session['user_info']['UID'], )).fetchone()
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+                                     (Products[0]['P_owner'], )).fetchone()
+    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
+    Delivery_fee = max(int(round(distance * 10)), 10)
 
     return jsonify({
-        'PIDs': PIDs,
-        'Quantities': Quantities,
+        'Products': Products,
+        'Subtotal': Subtotal,
+        'Delivery_fee': Delivery_fee,
     }), 200
-    # return redirect(url_for('nav'))
 
 
 @app.route("/login", methods=['POST'])

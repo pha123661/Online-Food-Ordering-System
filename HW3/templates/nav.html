@@ -323,7 +323,7 @@
               </tbody>
             </table>
 
-            <!-- Modal -->
+            <!-- Modal Order Preview-->
             <div class="modal fade" id="menu" data-backdrop="static" tabindex="-1" role="dialog"
               aria-labelledby="staticBackdropLabel" aria-hidden="true">
               <div class="modal-dialog">
@@ -350,7 +350,7 @@
                                 <th scope="col">price</th>
                                 <th scope="col">Quantity</th>
 
-                                <th scope="col">Order check</th>
+                                <th scope="col">Order quantity</th>
                               </tr>
                             </thead>
                             <tbody id="menu-update">
@@ -373,6 +373,7 @@
                   </form>
                 </div>
                 <script type="text/javascript">
+                  var Home_Order_Info;
                   $('document').ready(function () {
                     $('#Order_Preview').on('submit', function (event) {
                       event.preventDefault();
@@ -380,6 +381,98 @@
                         url: 'http://' + window.location.host + "/order_preview",
                         method: "POST",
                         data: $(this).serialize(),
+                        async: false,
+                        success: function (Order_info) {
+                          body = ""
+                          var Products = Order_info.Products
+                          for (let i = 0; i < Products.length; i++) {
+                            p = Products[i]
+                            body += "<tr>"
+                            body += `<th scope="row">${i + 1}</th>`
+                            body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
+                                     <td>${p.P_name}</td>
+                                     <td>${p.P_price}</td>
+                                     <td>${p.Order_quantity}</td>`
+                            body += "</tr>"
+                          }
+                          $('#Order_Made #Order_Made_Menu').html(body);
+                          $('#Order_Made #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
+                          $('#Order_Made #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
+                          $('#Order_Made #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
+
+                          // global variable
+                          Home_Order_Info = Order_info;
+
+
+                          $('#menu').modal('hide')
+                          $('#Order_Made').modal('show')
+                        },
+                        error: function (jqxhr, textStatus, errorThrown) {
+                          alert(jqxhr.responseText)
+                        }
+                      })
+                    });
+                  });
+                </script>
+              </div>
+            </div>
+            <!-- Modal Order Made -->
+            <div class="modal fade" id="Order_Made" data-backdrop="static" tabindex="-1" role="dialog"
+              aria-labelledby="staticBackdropLabel" aria-hidden="true">
+              <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Order Preview</h4>
+                  </div>
+                  <form id="Order_Made_form">
+                    <div class="modal-body">
+                      <!-- Order made -->
+                      <div class="row">
+                        <div class="  col-xs-12">
+                          <table class="table" style=" margin-top: 15px;">
+                            <thead>
+                              <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Picture</th>
+
+                                <th scope="col">Meal name</th>
+
+                                <th scope="col">Price</th>
+                                <th scope="col">Order quantity</th>
+                              </tr>
+                            </thead>
+                            <tbody id="Order_Made_Menu">
+                              <!-- To be added -->
+                            </tbody>
+                          </table>
+                        </div>
+
+                      </div>
+
+                      <!-- Order button  -->
+                    </div>
+                    <!-- <input type="hidden" name="Order_info"></input> -->
+                    <div class="modal-footer">
+                      <p class="text-right" id="Subtotal"></p>
+                      <p class="text-right" id="Delivery_fee"></p>
+                      <p class="text-right" id="Total_price"></p>
+                      <button type="submit" name="Order_Made" class="btn btn-default">Order</button>
+                    </div>
+                  </form>
+                </div>
+                <script type="text/javascript">
+                  $('document').ready(function () {
+                    $('#Order_Made').on('submit', function (event) {
+                      console.log(JSON.stringify(Home_Order_Info))
+                      event.preventDefault();
+                      $.ajax({
+                        url: 'http://' + window.location.host + "/order_made",
+                        method: "POST",
+                        contentType: 'application/json',
+                        data: JSON.stringify(Home_Order_Info),
                         async: false,
                         success: function (data) {
                           alert(JSON.stringify(data))
@@ -391,7 +484,6 @@
                     });
                   });
                 </script>
-
               </div>
             </div>
             <ul class="pagination" id="page-update">
