@@ -374,17 +374,18 @@
                 </div>
                 <script type="text/javascript">
                   $('document').ready(function () {
-                    $('#Order_Preview').on('submit', function () {
+                    $('#Order_Preview').on('submit', function (event) {
+                      event.preventDefault();
                       $.ajax({
                         url: 'http://' + window.location.host + "/order_preview",
                         method: "POST",
                         data: $(this).serialize(),
                         async: false,
                         success: function (data) {
-                          alert(data)
+                          alert(JSON.stringify(data))
                         },
                         error: function (jqxhr, textStatus, errorThrown) {
-                          alert("error: " + textStatus)
+                          alert(JSON.parse(jqxhr.responseText).message)
                         }
                       })
                     });

@@ -145,16 +145,15 @@ def order_preview():
         PIDs = request.form.getlist('PIDs')
         Quantities = [int(n) for n in request.form.getlist('Quantities')]
     except:
-        flash("Please check: order content must be valid")
-        return redirect(url_for('nav'))
+        return jsonify(message='Please check: order content must be valid'), 500
 
     if sum(Quantities) <= 0:
-        flash("Failed to create order: please select at least on product")
-        return redirect(url_for('nav'))
+        return jsonify(message='Failed to create order: please select at least on product'), 500
 
-    print(request.form)
-    flash("Order created successfully!")
-    return 'SSS'
+    return jsonify({
+        'PIDs': PIDs,
+        'Quantities': Quantities,
+    }), 200
     # return redirect(url_for('nav'))
 
 
