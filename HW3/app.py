@@ -446,9 +446,34 @@ def nav():
     ).fetchall()
 
     image_info = [tple[4].decode("utf-8") for tple in product_info]
-    # print(image_info)
+    
+    # fetch my_order_info
+    db = get_db()
+    my_order_info = db.cursor().execute(
+        """ select *
+            from Process_Order
+            where UID = ?""", (UID,)
+    ).fetchall()
 
-    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
+    # fetch shop_order_info
+    SID = shop_info['SID']
+    db = get_db()
+    shop_order_info = db.cursor().execute(
+        """ select *
+            from Orders
+            where SID = ?""", (SID,)
+    ).fetchall()
+
+    # fetch transaction_info
+    db = get_db()
+    transaction_info = db.cursor().execute(
+        """ select *
+            from Transaction_Record
+            where UID = ?""", (UID,)
+    ).fetchall()
+
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info, 
+                            my_order_info=my_order_info, shop_order_info=shop_order_info, transaction_info=transaction_info)
 
 
 @app.route("/edit_location", methods=['POST'])
