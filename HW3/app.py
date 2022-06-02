@@ -455,8 +455,13 @@ def nav():
             where UID = ?""", (UID,)
     ).fetchall()
 
+    # try fetch SID
+    try:
+        SID = shop_info['SID']
+    except:
+        SID = None
+
     # fetch shop_order_info
-    SID = shop_info['SID']
     db = get_db()
     shop_order_info = db.cursor().execute(
         """ select *
