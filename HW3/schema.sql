@@ -56,10 +56,13 @@ CREATE TABLE
     if NOT EXISTS Transaction_Record(
         TID INTEGER PRIMARY KEY AUTOINCREMENT,
         T_action INT NOT NULL,
-        -- 0: deduct, 1: top-up
+        -- 0: S -> O, 1: O -> S
         T_amount INT NOT NULL,
-        UID INT,
-        FOREIGN key (UID) REFERENCES Users(UID)
+        T_time datetime NOT NULL,
+        T_Subject INT,
+        T_Object INT,
+        FOREIGN key (T_Subject) REFERENCES Users(UID),
+        FOREIGN key (T_Object) REFERENCES Users(UID)
     );
 
 CREATE TABLE
