@@ -9,6 +9,7 @@ from flask import (
     session, flash, redirect, url_for,
     json, jsonify,
 )
+import datetime
 
 sqlite3.enable_callback_tracebacks(True)
 
@@ -119,7 +120,7 @@ def order_made():
     '''
     called when any order has been made
     '''
-    print(request.json)
+    #print(request.json)
     # try:
     #     PIDs = request.form.getlist('PIDs')
     #     Quantities = [int(n) for n in request.form.getlist('Quantities')]
@@ -130,6 +131,69 @@ def order_made():
     # if sum(Quantities) <= 0:
     #     flash("Failed to create order: please select at least on product")
     #     return redirect(url_for('nav'))
+
+    json_data = request.json
+    #print(json_data)
+
+    # check all ordered products one by one
+    non_exist_product_name = []
+    non_sufficient_product_name = []
+    for product in json_data['Products']:
+        db = get_db()
+        rst = db.cursor().execute('''
+            select *
+            from Products
+            where PID = ?
+            ''', (product['PID'],)).fetchone()
+        # check if product exists
+        if rst is None:
+            non_exist_product_name.append(product['P_name'])
+        # product exists, check if product is sufficient
+        elif product['Order_quantity'] > rst['P_quantity']:
+            non_sufficient_product_name.append(product['P_name'])
+    # check if product exists
+    if len(non_exist_product_name) > 0:
+        flash("Failed to create order: one or more products does not exist")
+        return redirect(url_for('nav'))
+    # check if product quantity sufficient
+    if len(non_sufficient_product_name) > 0:
+        flash("Failed to create order: insufficient quantity of {}".format(non_sufficient_product_name))
+        return redirect(url_for('nav'))
+    # check if wallet ballence sufficient
+    if json_data['Subtotal'] > session['user_info']['U_balance']:
+        flash("Failed to create order: insufficient balance")
+        return redirect(url_for('nav'))
+    
+    # create successful, update database
+    # update Users
+    db = get_db()
+    db.cursor().execute('''
+        update Users
+        set U_balance = ?
+        where UID = ?
+    ''', (session['user_info']['U_balance'] - json_data['Subtotal'], session['user_info']['UID']))
+    session['user_info']['U_balance'] = session['user_info']['U_balance'] - json_data['Subtotal']
+
+    # update Orders
+    db.cursor().execute('''
+        insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
+        values (?, ?, ?, ?, ?, ?, ?)
+    ''', (0, datetime.datetime.now(), None, json_data['Distance'], len(json_data['Products']), json_data['Type'], json_data['SID']))
+
+    #update Process_Order
+
+    #update Transaction_Record
+
+    #update Products
+
+    #update O_Contains_P
+
+    print("update successful")
+
+    db.commit()
+
+    return redirect(url_for('nav'))
+
 
 
 @app.route("/order_preview", methods=['POST'])
@@ -191,6 +255,9 @@ def order_preview():
         'Products': Products,
         'Subtotal': Subtotal,
         'Delivery_fee': Delivery_fee,
+        'Distance' : distance,
+        'Type' : request.form['Dilivery'],
+        'SID' : Products[0]['P_owner']
     }), 200
 
 
