@@ -418,8 +418,68 @@ def search_shops():
 
 @app.route("/order-detail", methods=['POST'])
 def order_detail():
-    
-    return
+    db = get_db()
+    try:
+        PIDs = []
+        Quantities = []
+        OID = request.form['OID']
+        
+        rst = db.cursor().execute(
+            '''
+            select PID, Quantity
+            from O_Contains_P
+            where OID = ?
+            ''', 
+            (OID,)
+        ).fetchall()
+        
+        for PID, quantity in rst:
+            PIDs.append(PID)
+            Quantities.append(quantity)
+
+        if len(Quantities) == 0:
+            return jsonify('Failed to create order: please select at least on product'), 500
+    except ValueError:
+        return jsonify('Please check: order content must be valid'), 500
+
+    # query product infos
+    db.cursor().execute("""
+        create temp table PID_list(PID INTEGER PRIMARY KEY)
+    """)
+    for P in PIDs:
+        db.cursor().execute("""
+        insert into PID_list values (?)
+        """, (P, ))
+
+    rst = db.cursor().execute("""
+    select * from PID_list natural join Products
+    """).fetchall()
+
+    # decode image + calculate price
+    assert len(rst) == len(Quantities)
+    Products = [dict(r) for r in rst]
+
+    Subtotal = 0
+    for r, q in zip(Products, Quantities):
+        r['P_image'] = base64.b64encode(r['P_image']).decode()
+        r['Order_quantity'] = q
+        Subtotal += r['P_price'] * q
+
+    # calculate fee
+    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
+                                     (session['user_info']['UID'], )).fetchone()
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+                                     (Products[0]['P_owner'], )).fetchone()
+    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
+
+    Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
+        int(round(distance * 10)), 10)
+
+    return jsonify({
+        'Products': Products,
+        'Subtotal': Subtotal,
+        'Delivery_fee': Delivery_fee,
+    }), 200
 
 
 def total_price(OID):
@@ -476,7 +536,7 @@ def total_price(OID):
 
 @app.route("/search-MyOrders", methods=['POST'])
 def search_MyOrders():
-    user = request.form['UID']
+    UID = request.form['UID']
     db = get_db()
     rst = db.cursor().execute(
         '''
@@ -493,13 +553,50 @@ def search_MyOrders():
             end as end_time, S_name, OID
         from Process_Order natural join Orders natural join Stores
         where UID = ?
-        ''', user
+        ''', (UID,)
     ).fetchall()
     table = {'tableRow': []}
     append = table['tableRow'].append
     for Status, start_time, end_time, shop_name, OID in rst:
         append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'shop_name': shop_name, 
                 'OID': OID, 'total_price': total_price(OID)})
+    print(table['tableRow'])
+    response = jsonify(table)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
+
+
+@app.route("/search-transactionRecord", methods=['POST'])
+def search_transactionRecord():
+    UID = request.form['UID']
+    db = get_db()
+    rst = db.cursor().execute(
+        '''
+        select TID, 
+            case 
+                when T_action = 2 then 'Recharge'
+                when T_action = 1 then 'Collection'
+                when T_action = 0 then 'Payment'
+            end as Action, 
+            strftime('%Y/%m/%d %H:%M', T_time) as Time,
+            case
+                when T_action = 2 then U_name
+                else (
+                        select S_name
+                        from Transaction_Record, Stores
+                        where T_Object = S_owner
+                    )
+            end as Trader,
+            T_amount
+        from Transaction_Record, Users
+        where T_Object = UID
+        and T_Object = ?
+        ''', (UID,)
+    ).fetchall()
+    transaction = [{'TID': TID, 'Action': Action, 'Time': Time, 'Trader': Trader, 'T_amount': T_amount}
+                   for TID, Action, Time, Trader, T_amount in rst]
+    table = {'tableRow': transaction}
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')

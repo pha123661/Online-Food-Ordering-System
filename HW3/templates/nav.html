@@ -41,7 +41,7 @@
       <li><a href="#Shop">Shops</a></li>
       <li><a href="#MyOrder" onclick="searchMyOrders()">My Orders</a></li>
       <li><a href="#ShopOrder">Shop Orders</a></li>
-      <li><a href="#TsRecord">Transaction Records</a></li>
+      <li><a href="#TsRecord" onclick="searchTransactionRecord()">Transaction Records</a></li>
     </ul>
 
     <div class="tab-content">
@@ -724,7 +724,7 @@
         <h3>My Orders</h3>
         <!-- HOW-TO: Filter table rows based on selected value
           https://stackoverflow.com/questions/41554154/filter-table-rows-based-on-select-value -->
-        <select class="form-control" name="Status" id="order-status" style="width:150px; " onchange="updateMyOrderTable(this.value)">
+        <select class="form-control" name="Status" id="order-status" style="width:150px; " onchange="updateMyOrderTable()">
           <option>All</option>
           <option>Finished</option>
           <option>Not finished</option>
@@ -815,9 +815,14 @@
                       </tbody>
                     </table>
                     <!-- EX: row['subtotal'] -->
-                    <p class="text-right">Subtotal $199</p>
+                    <!-- <p class="text-right">Subtotal $199</p>
                     <p class="text-right"><small><em>Delivery fee $19</em></small></p>
-                    <p class="text-right">Total Price $218</p>
+                    <p class="text-right">Total Price $218</p> -->
+                    <div class="modal-footer">
+                      <p class="text-right" id="Subtotal"></p>
+                      <p class="text-right" id="Delivery_fee"></p>
+                      <p class="text-right" id="Total_price"></p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -842,44 +847,48 @@
               }
             });
           })
+          function deleteOrder(OID) {
+            // implement your order delete function
+            // and refresh order table
+            searchMyOrders()
+          }
           function updateOrderDetail(OID){
-            // $.ajax({
-            //   url: 'http://' + window.location.host + "/order-detail",
-            //   method: "POST",
-            //   data: {'OID': OID},
-            //   async: false,
-            //   success: function (Order_info) {
-            //     body = ""
-            //     var Products = Order_info.Products
-            //     for (let i = 0; i < Products.length; i++) {
-            //       p = Products[i]
-            //       body += "<tr>"
-            //       body += `<th scope="row">${i + 1}</th>`
-            //       body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
-            //                 <td>${p.P_name}</td>
-            //                 <td>${p.P_price}</td>
-            //                 <td>${p.Order_quantity}</td>`
-            //       body += "</tr>"
-            //     }
-            //     $('#Order_Made #Order_Made_Menu').html(body);
-            //     $('#Order_Made #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
-            //     $('#Order_Made #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
-            //     $('#Order_Made #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
+            $.ajax({
+              url: 'http://' + window.location.host + "/order-detail",
+              method: "POST",
+              data: {'OID': OID},
+              async: false,
+              success: function (Order_info) {
+                body = ""
+                var Products = Order_info.Products
+                for (let i = 0; i < Products.length; i++) {
+                  p = Products[i]
+                  body += "<tr>"
+                  body += `<th scope="row">${i + 1}</th>`
+                  body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
+                            <td>${p.P_name}</td>
+                            <td>${p.P_price}</td>
+                            <td>${p.Order_quantity}</td>`
+                  body += "</tr>"
+                }
+                $('#MyOrderDetail-1 #MyOrderDetail-T-1').html(body);
+                $('#MyOrderDetail-1 #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
+                $('#MyOrderDetail-1 #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
+                $('#MyOrderDetail-1 #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
 
-            //     $('#Order_Made').modal('show')
-            //   },
-            //   error: function (jqxhr, textStatus, errorThrown) {
-            //     alert(jqxhr.responseText)
-            //   }
-            // })
+                $('#MyOrderDetail-1').modal('show')
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert(jqxhr.responseText)
+              }
+            })
           }
           orders = []
           function updateMyOrderTable(){
-            var table = '', filter = document.getElementById("order-status").value, index = 1;
-            console.log(filter);
+            var table = '', filter = document.getElementById("order-status").value;
             $.each(orders, function (i, order) {
               if (filter != 'All' && order.Status != filter) {return True;}
-              table += '<tr><th scope="row">' + index + '</th>';
+              table += '<tr><th scope="row">' + order.OID + '</th>';
               table += '<td>' + order.Status + '</td>';
               table += '<td>' + order.start_time + '</td>';
               table += '<td>' + order.end_time + '</td>';
@@ -887,15 +896,14 @@
               table += '<td>' + order.total_price + '</td>';
               table += 
               `<td>
-                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " onclick="updateOrderDetail(this.name)">
-                    Order Details</button>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
+                  onclick="updateOrderDetail(this.name)"> Order Details</button>
                 </td>
                 <td>
-                  <button type="button" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
-                    onclick="none">Cancel Order</button>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
+                    onclick="deleteOrder(this.name)">Cancel Order</button>
                 </td>
               </tr>`
-              index += 1;
             });
             $("#MyOrder-update").html(table);
           }
@@ -906,7 +914,7 @@
               data: {'UID': UID},
               async: false,
               success: function (data) {
-                orders = data.tableRow
+                orders = data.tableRow;
                 updateMyOrderTable();
               },
               error: function (jqxhr, textStatus, errorThrown) {
@@ -1028,7 +1036,7 @@
       <!-- Transacrion Records -->
       <div id="TsRecord" class="tab-pane fade">
         <h3>Transacrion Records</h3>
-        <select class="form-control" name="Status" style="width:150px; ">
+        <select class="form-control" name="Status" id="transaction-status" style="width:150px; " onchange="updateTransactionRecord()">
           <option>All</option>
           <option>Payment</option>
           <option>Recieve</option>
@@ -1046,7 +1054,7 @@
                   <th scope="col">Amount</th>
                 </tr>
               </thead>
-              <tbody id="order-update">
+              <tbody id="transaction-update">
                 <tr>
                   <td>
                     tmp1
@@ -1069,6 +1077,35 @@
           </div>
         </div>
       </div>
+      <script type="text/javascript">
+        function updateTransactionRecord() {
+          var table = '', filter = document.getElementById("transaction-status").value;
+            $.each(orders, function (i, order) {
+              if (filter != 'All' && order.Action != filter) {return True;}
+              table += '<tr><th scope="row">' + order.TID + '</th>';
+              table += '<td>' + order.Action + '</td>';
+              table += '<td>' + order.Time + '</td>';
+              table += '<td>' + order.Trader + '</td>';
+              table += '<td>' + order.T_amount + '</td></tr>';
+            });
+            $("#transaction-update").html(table);
+        }
+        function searchTransactionRecord() {
+          $.ajax({
+            url: 'http://' + window.location.host + "/search-transactionRecord",
+            type: "POST",
+            data: {'UID': UID},
+            async: false,
+            success: function (data) {
+              orders = data.tableRow
+              updateTransactionRecord();
+            },
+            error: function (jqxhr, textStatus, errorThrown) {
+              alert("error: " + textStatus)
+            }
+          })
+        }
+      </script>
 
     </div>
   </div>
