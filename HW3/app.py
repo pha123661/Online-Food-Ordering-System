@@ -420,14 +420,21 @@ def search_shops():
 def search_MyOrders():
     user = request.form['UID']
     db = get_db()
-    my_orders = db.cursor().execute(
+    data = db.cursor().execute(
         '''
-        select 
-        from Transaction_Record, Process_Order
-        where T_Subject = UID
-        and 
-        '''
+        with status(O_status) as (
+            select case
+                when O_status = 0 then 'Not finished'
+                whem O_status = 1 then 'Finished'
+                else 'Canceled'
+            end as Status
+        )
+        select Status, O_start_time, O_end_time, S_name, OID
+        from Process_Order natural join Orders natural join Stores
+        where UID = ?
+        ''', user
     ).fetchall()
+    my_orders = {}
     return
 
 

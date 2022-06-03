@@ -35,7 +35,7 @@ CREATE TABLE
         O_start_time datetime NOT NULL,
         -- insert current time using datetime('now')
         -- format: 'yyyy-mm-dd hh:mi:ss'
-        O_end_time datetime NOT NULL,
+        O_end_time datetime,
         O_distance FLOAT NOT NULL,
         O_amount INT NOT NULL,
         -- total amount (could be removed)
