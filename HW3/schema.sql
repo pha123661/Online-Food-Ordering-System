@@ -31,7 +31,8 @@ CREATE TABLE
         O_status INT NOT NULL,
         -- 0: not done, 1: done, -1:canceled
         O_start_time datetime NOT NULL,
-        -- format: 'yyyy-mm-dd hh-mi-ss'
+        -- insert "now" using datetime('now')
+        -- format: 'yyyy-mm-dd hh:mi:ss'
         O_end_time datetime NOT NULL,
         O_distance FLOAT NOT NULL,
         O_amount INT NOT NULL,
