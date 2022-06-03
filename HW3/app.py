@@ -132,7 +132,6 @@ def order_made():
     #     return redirect(url_for('nav'))
 
 
-
 @app.route("/order_preview", methods=['POST'])
 def order_preview():
     '''
@@ -184,7 +183,9 @@ def order_preview():
     lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
-    Delivery_fee = max(int(round(distance * 10)), 10)
+
+    Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
+        int(round(distance * 10)), 10)
 
     return jsonify({
         'Products': Products,
@@ -446,7 +447,7 @@ def nav():
     ).fetchall()
 
     image_info = [tple[4].decode("utf-8") for tple in product_info]
-    
+
     # fetch my_order_info
     db = get_db()
     my_order_info = db.cursor().execute(
@@ -477,8 +478,8 @@ def nav():
             where UID = ?""", (UID,)
     ).fetchall()
 
-    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info, 
-                            my_order_info=my_order_info, shop_order_info=shop_order_info, transaction_info=transaction_info)
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info,
+                           my_order_info=my_order_info, shop_order_info=shop_order_info, transaction_info=transaction_info)
 
 
 @app.route("/edit_location", methods=['POST'])
