@@ -416,26 +416,95 @@ def search_shops():
     return response
 
 
+@app.route("/order-detail", methods=['POST'])
+def order_detail():
+    
+    return
+
+
+def total_price(OID):
+    db = get_db()
+    rst = db.cursor().execute(
+        '''
+        select PID, Quantity
+        from O_Contains_P
+        where OID = ?
+        ''',
+        OID
+    ).fetchall()
+    
+    PIDs = []
+    Quantities = []
+    for PID, quantity in rst:
+        PIDs.append(PID)
+        Quantities.append(quantity)
+
+    # query product infos
+    db.cursor().execute("""
+        create temp table PID_list(PID INTEGER PRIMARY KEY)
+    """)
+    for P in PIDs:
+        db.cursor().execute("""
+        insert into PID_list values (?)
+        """, (P, ))
+
+    rst = db.cursor().execute("""
+    select * from PID_list natural join Products
+    """).fetchall()
+    
+    Products = [dict(r) for r in rst]
+
+    Subtotal = 0
+    for r, q in zip(Products, Quantities):
+        r['Order_quantity'] = q
+        Subtotal += r['P_price'] * q
+
+    # calculate fee
+    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
+                                     (session['user_info']['UID'], )).fetchone()
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+                                     (Products[0]['P_owner'], )).fetchone()
+    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
+
+    Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
+        int(round(distance * 10)), 10)
+
+    total_price = Subtotal + Delivery_fee
+    
+    return total_price
+
+
 @app.route("/search-MyOrders", methods=['POST'])
 def search_MyOrders():
     user = request.form['UID']
     db = get_db()
-    data = db.cursor().execute(
+    rst = db.cursor().execute(
         '''
-        with status(O_status) as (
-            select case
+        select 
+            case
                 when O_status = 0 then 'Not finished'
-                whem O_status = 1 then 'Finished'
+                when O_status = 1 then 'Finished'
                 else 'Canceled'
-            end as Status
-        )
-        select Status, O_start_time, O_end_time, S_name, OID
+            end as Status, 
+            strftime('%Y/%m/%d %H:%M', O_start_time) as start_time, 
+            case
+                when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
+                else ''
+            end as end_time, S_name, OID
         from Process_Order natural join Orders natural join Stores
         where UID = ?
         ''', user
     ).fetchall()
-    my_orders = {}
-    return
+    table = {'tableRow': []}
+    append = table['tableRow'].append
+    for Status, start_time, end_time, shop_name, OID in rst:
+        append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'shop_name': shop_name, 
+                'OID': OID, 'total_price': total_price(OID)})
+    print(table['tableRow'])
+    response = jsonify(table)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
 
 
 @app.route("/nav.html")
