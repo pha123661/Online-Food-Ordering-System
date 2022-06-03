@@ -56,7 +56,7 @@ CREATE TABLE
     if NOT EXISTS Transaction_Record(
         TID INTEGER PRIMARY KEY AUTOINCREMENT,
         T_action INT NOT NULL,
-        -- 0: S -> O, 1: O -> S
+        -- 0: S -> O, 1: O -> S, 2: O == S
         T_amount INT NOT NULL,
         T_time datetime NOT NULL,
         T_Subject INT,
