@@ -10,7 +10,9 @@ CREATE TABLE
         U_latitude FLOAT NOT NULL,
         U_longitude FLOAT NOT NULL,
         U_phone VARCHAR(10) NOT NULL,
-        U_balance INT NOT NULL
+        U_balance INT NOT NULL,
+        -- constraints --
+        CONSTRAINT U_balance_non_negative CHECK (U_balance >= 0)
     );
 
 CREATE TABLE
@@ -31,14 +33,18 @@ CREATE TABLE
         O_status INT NOT NULL,
         -- 0: not done, 1: done, -1:canceled
         O_start_time datetime NOT NULL,
-        -- format: 'yyyy-mm-dd hh-mi-ss'
+        -- insert current time using datetime('now')
+        -- format: 'yyyy-mm-dd hh:mi:ss'
         O_end_time datetime NOT NULL,
         O_distance FLOAT NOT NULL,
         O_amount INT NOT NULL,
+        -- total amount (could be removed)
         O_type INT NOT NULL,
         -- 0: take-out, 1: delivery
         SID INT NOT NULL,
-        FOREIGN key (SID) REFERENCES Stores(SID)
+        FOREIGN key (SID) REFERENCES Stores(SID),
+        -- constraints --
+        CONSTRAINT O_amount_gt_zero CHECK (O_amount > 0)
     );
 
 CREATE TABLE
@@ -56,8 +62,10 @@ CREATE TABLE
     if NOT EXISTS Transaction_Record(
         TID INTEGER PRIMARY KEY AUTOINCREMENT,
         T_action INT NOT NULL,
-        -- 0: S -> O, 1: O -> S
+        -- 0: S(-) -> O(+), 1: O(-) -> S(+), 2: O(+) == S(+)
+        -- actually its a redundant column
         T_amount INT NOT NULL,
+        -- amount could be negative if action == 0
         T_time datetime NOT NULL,
         T_Subject INT,
         T_Object INT,
@@ -77,7 +85,9 @@ CREATE TABLE
         P_owner INT NOT NULL,
         P_store INT NOT NULL,
         FOREIGN key (P_owner) REFERENCES Users(UID),
-        FOREIGN key (P_store) REFERENCES Stores(SID)
+        FOREIGN key (P_store) REFERENCES Stores(SID),
+        -- constraints --
+        CONSTRAINT P_quantity_non_negative CHECK (P_quantity >= 0)
     );
 
 CREATE TABLE
@@ -87,5 +97,7 @@ CREATE TABLE
         Quantity INT unsigned NOT NULL,
         PRIMARY key (OID, PID),
         FOREIGN key (OID) REFERENCES Orders(OID),
-        FOREIGN key (PID) REFERENCES Products(PID)
+        FOREIGN key (PID) REFERENCES Products(PID),
+        -- constraints --
+        CONSTRAINT Quantity_gt_zero CHECK (Quantity > 0)
     );

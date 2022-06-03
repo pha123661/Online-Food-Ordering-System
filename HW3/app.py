@@ -471,10 +471,10 @@ def nav():
             where UID = ?""", (UID,)
     ).fetchall()
 
-    # try fetch SID
-    try:
+    # fetch SID
+    if shop_info is not None:
         SID = shop_info['SID']
-    except:
+    else:
         SID = None
 
     # fetch shop_order_info
@@ -490,7 +490,7 @@ def nav():
     transaction_info = db.cursor().execute(
         """ select *
             from Transaction_Record
-            where UID = ?""", (UID,)
+            where T_Subject = ?""", (UID,)
     ).fetchall()
 
     return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info,
@@ -737,6 +737,37 @@ def delete_product():
     db.commit()
 
     flash("Delete Successful")
+    return redirect(url_for('nav'))
+
+
+@app.route('/top_up', methods=['POST'])
+def top_up():
+    UID = session['user_info']['UID']
+    try:
+        value = int(request.form['value'])
+        if value <= 0:
+            flash('Invalid value')
+            return redirect(url_for('nav'))
+    except ValueError:
+        flash('Invalid value')
+        return redirect(url_for('nav'))
+
+    db = get_db()
+    # update Users
+    db.cursor().execute("""
+        update Users
+        set U_balance = U_balance + ?
+        where UID = ?
+    """, (value, UID))
+
+    # update Transaction_Record
+    db.cursor().execute("""
+        insert into Transaction_Record
+        values (null, 2, ?, datetime('now'), ?, ?)
+    """, (value, UID, UID))
+
+    db.commit()
+
     return redirect(url_for('nav'))
 
 
