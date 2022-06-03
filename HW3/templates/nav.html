@@ -39,11 +39,9 @@
     <ul class="nav nav-tabs">
       <li class="active"><a href="#Home">Home</a></li>
       <li><a href="#Shop">Shops</a></li>
-      <li><a href="#MyOrder">My Orders</a></li>
+      <li><a href="#MyOrder" onclick="updateMyOrders()">My Orders</a></li>
       <li><a href="#ShopOrder">Shop Orders</a></li>
       <li><a href="#TsRecord">Transaction Records</a></li>
-
-
     </ul>
 
     <div class="tab-content">
@@ -825,6 +823,39 @@
             <!-- for loop2 should end here -->
           </div>
         </div>
+        <script type="text/javascript">
+          var UID = 0;
+          // get user location
+          $(document).ready(function () {
+            $.ajax({
+              url: 'http://' + window.location.host + '/get_session',
+              type: 'GET',
+              dataType: 'json',
+              success: function (result) {
+                UID = result.user_info['UID']
+              },
+              error: function (xhr, status, error) {
+                var err = eval("(" + xhr.responseText + ")");
+                alert(err.Message + '\n' + 'http://' + window.location.host + '/get_session');
+              }
+            });
+          })
+          var my_order = [];
+          function updateMyOrders(){
+            $.ajax({
+              url: 'http://' + window.location.host + "/search-MyOrders",
+              method: "POST",
+              data: {'UID': UID},
+              async: false,
+              success: function (data) {
+                my_order = data;
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert("error: " + textStatus)
+              }
+            })
+          }
+        </script>
       </div>
 
       <!-- Shop Orders -->

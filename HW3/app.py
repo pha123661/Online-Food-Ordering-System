@@ -416,6 +416,21 @@ def search_shops():
     return response
 
 
+@app.route("/search-MyOrders", methods=['POST'])
+def search_MyOrders():
+    user = request.form['UID']
+    db = get_db()
+    my_orders = db.cursor().execute(
+        '''
+        select 
+        from Transaction_Record, Process_Order
+        where T_Subject = UID
+        and 
+        '''
+    ).fetchall()
+    return
+
+
 @app.route("/nav.html")
 @login_required
 def nav():
