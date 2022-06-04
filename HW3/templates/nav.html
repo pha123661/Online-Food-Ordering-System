@@ -1105,6 +1105,8 @@
                 <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-danger " 
                 onclick="cancelShopOrder(this.name)"> Cancel</button>
               </td></tr>`
+            } else {
+              table += '<td></td></tr>'
             }
           });
           $("#ShopOrder-update").html(table);
