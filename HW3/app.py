@@ -683,6 +683,11 @@ def search_transactionRecord():
     db = get_db()
     rst = db.cursor().execute(
         '''
+        with Shop_Name(T_Object, S_name) as (
+                select T_Object, S_name 
+                from Transaction_Record left join Stores
+                on T_Object = S_owner
+            )
         select TID, 
             case 
                 when T_action = 2 then 'Recharge'
@@ -692,14 +697,10 @@ def search_transactionRecord():
             strftime('%Y/%m/%d %H:%M', T_time) as Time,
             case
                 when T_action = 2 then U_name
-                else (
-                        select S_name
-                        from Transaction_Record, Stores
-                        where T_Object = S_owner
-                    )
+                else S_name
             end as Trader,
             T_amount
-        from Transaction_Record, Users
+        from Transaction_Record natural join Shop_Name, Users
         where T_Object = UID
         and T_Object = ?
         ''', (UID,)
