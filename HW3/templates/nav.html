@@ -849,6 +849,7 @@
           })
           function deleteOrder(OID) {
             // implement your order delete function
+            // !!! careful, use parseInt(OID) here since OID is str
             // and refresh order table
             searchMyOrders()
           }
@@ -856,7 +857,7 @@
             $.ajax({
               url: 'http://' + window.location.host + "/order-detail",
               method: "POST",
-              data: {'OID': OID},
+              data: {'OID': parseInt(OID)},
               async: false,
               success: function (Order_info) {
                 body = ""
@@ -883,27 +884,26 @@
               }
             })
           }
-          orders = []
+          MyOrders = []
           function updateMyOrderTable(){
             var table = '', filter = document.getElementById("order-status").value;
-            $.each(orders, function (i, order) {
+            $.each(MyOrders, function (i, order) {
               if (filter != 'All' && order.Status != filter) {return True;}
               table += '<tr><th scope="row">' + order.OID + '</th>';
               table += '<td>' + order.Status + '</td>';
               table += '<td>' + order.start_time + '</td>';
               table += '<td>' + order.end_time + '</td>';
-              table += '<td>' + order.shop_name + '</td>';
+              table += '<td>' + order.S_name + '</td>';
               table += '<td>' + order.total_price + '</td>';
-              table += 
-              `<td>
+              table += `
+                <td>
                   <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
                   onclick="updateOrderDetail(this.name)"> Order Details</button>
                 </td>
                 <td>
                   <button type="button" name="${order.OID}" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
                     onclick="deleteOrder(this.name)">Cancel Order</button>
-                </td>
-              </tr>`
+                </td></tr>`;
             });
             $("#MyOrder-update").html(table);
           }
@@ -914,7 +914,7 @@
               data: {'UID': UID},
               async: false,
               success: function (data) {
-                orders = data.tableRow;
+                MyOrders = data.tableRow;
                 updateMyOrderTable();
               },
               error: function (jqxhr, textStatus, errorThrown) {
@@ -928,7 +928,7 @@
       <!-- Shop Orders -->
       <div id="ShopOrder" class="tab-pane fade">
         <h3>Shop Orders</h3>
-        <select class="form-control" name="Status" style="width:150px; ">
+        <select class="form-control" name="Status" id="shop-order-status" style="width:150px; ">
           <option>All</option>
           <option>Finished</option>
           <option>Not finished</option>
@@ -1032,6 +1032,56 @@
           </div>
         </div>
       </div>
+      <script type="text/javascript">
+        function updateShopOrderDetail(){
+
+        }
+        ShopOrders = [];
+        function updateShopOrderTable() {
+          var table = '', filter = document.getElementById("shop-order-status").value;
+          $.each(ShopOrders, function (i, order) {
+              if (filter != 'All' && order.Status != filter) {return True;}
+              table += '<tr><th scope="row">' + order.OID + '</th>';
+              table += '<td>' + order.Status + '</td>';
+              table += '<td>' + order.start_time + '</td>';
+              table += '<td>' + order.end_time + '</td>';
+              table += '<td>' + order.S_name + '</td>';
+              table += '<td>' + order.total_price + '</td>';
+              table += `
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
+                  onclick="updateShopOrderDetail(this.name)"> Order Details</button>
+                </td>`;
+              if (order.Status == 'Not finished') {
+                table += `
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-success " 
+                  onclick="none"> Done</button>
+                </td>
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-danger " 
+                  onclick="none"> Cancel</button>
+                </td></tr>`
+              }
+            });
+            $("#MyOrder-update").html(table);
+        }
+        function searchShopOrders(){
+          $.ajax({
+            url: 'http://' + window.location.host + "/search-ShopOrders",
+            method: "POST",
+            data: {'UID': UID},
+            async: false,
+            success: function (data) {
+              ShopOrders = data.tableRow;
+              updateShopOrderTable();
+            },
+            error: function (jqxhr, textStatus, errorThrown) {
+              alert("error: " + textStatus)
+            }
+          })
+        }
+      </script>
 
       <!-- Transacrion Records -->
       <div id="TsRecord" class="tab-pane fade">
@@ -1078,17 +1128,18 @@
         </div>
       </div>
       <script type="text/javascript">
+        transactions = [];
         function updateTransactionRecord() {
           var table = '', filter = document.getElementById("transaction-status").value;
-            $.each(orders, function (i, order) {
-              if (filter != 'All' && order.Action != filter) {return True;}
-              table += '<tr><th scope="row">' + order.TID + '</th>';
-              table += '<td>' + order.Action + '</td>';
-              table += '<td>' + order.Time + '</td>';
-              table += '<td>' + order.Trader + '</td>';
-              table += '<td>' + order.T_amount + '</td></tr>';
-            });
-            $("#transaction-update").html(table);
+          $.each(transactions, function (i, transaction) {
+            if (filter != 'All' && transaction.Action != filter) {return True;}
+            table += '<tr><th scope="row">' + transaction.TID + '</th>';
+            table += '<td>' + transaction.Action + '</td>';
+            table += '<td>' + transaction.Time + '</td>';
+            table += '<td>' + transaction.Trader + '</td>';
+            table += '<td>' + transaction.T_amount + '</td></tr>';
+          });
+          $("#transaction-update").html(table);
         }
         function searchTransactionRecord() {
           $.ajax({
@@ -1097,7 +1148,7 @@
             data: {'UID': UID},
             async: false,
             success: function (data) {
-              orders = data.tableRow
+              transactions = data.tableRow
               updateTransactionRecord();
             },
             error: function (jqxhr, textStatus, errorThrown) {

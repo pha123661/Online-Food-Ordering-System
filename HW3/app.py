@@ -624,9 +624,52 @@ def search_MyOrders():
     ).fetchall()
     table = {'tableRow': []}
     append = table['tableRow'].append
-    for Status, start_time, end_time, shop_name, OID in rst:
-        append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'shop_name': shop_name, 
+    for Status, start_time, end_time, S_name, OID in rst:
+        append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name, 
                 'OID': OID, 'total_price': total_price(OID)})
+    print(table['tableRow'])
+    response = jsonify(table)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
+
+
+@app.route('/search-ShopOrders', methods=['POST'])
+def search_ShopOrders():
+    UID = request.form['UID']
+    db = get_db()
+    rst = db.cursor().execute(
+        '''
+        select SID
+        from Stores
+        where S_owner = ?
+        ''', (UID,)
+    ).fetchone()
+    table = {'tableRow': []}
+    append = table['tableRow'].append
+    if rst is not None:
+        SID = rst
+        rst = db.cursor().execute(
+            '''
+            select OID,
+                case
+                    when O_status = 0 then 'Not finished'
+                    when O_status = 1 then 'Finished'
+                    else 'Canceled'
+                end as Status,
+                strftime('%Y/%m/%d %H:%M', O_start_time) as start_time, 
+                case
+                    when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
+                    else ''
+                end as end_time,
+                S_name
+            from Orders natural join Stores
+            where SID = ?
+            ''', (SID,)
+        ).fetchall()
+        for OID, Status, start_time, end_time, S_name in rst:
+            append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name, 
+                    'OID': OID, 'total_price': total_price(OID)})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
