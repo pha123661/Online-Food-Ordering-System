@@ -40,7 +40,7 @@
       <li class="active"><a href="#Home">Home</a></li>
       <li><a href="#Shop">Shops</a></li>
       <li><a href="#MyOrder" onclick="searchMyOrders()">My Orders</a></li>
-      <li><a href="#ShopOrder">Shop Orders</a></li>
+      <li><a href="#ShopOrder" onclick="searchShopOrders()">Shop Orders</a></li>
       <li><a href="#TsRecord" onclick="searchTransactionRecord()">Transaction Records</a></li>
     </ul>
 
@@ -831,7 +831,7 @@
           </div>
         </div>
         <script type="text/javascript">
-          var UID = 0;
+          var UID = -1;
           // get user location
           $(document).ready(function () {
             $.ajax({
@@ -949,7 +949,7 @@
                   <th scope="col">Action</th>
                 </tr>
               </thead>
-              <tbody id="ShopOrder">
+              <tbody id="ShopOrder-update">
                 <!-- for loop1 should start here -->
                 <tr>
                   <th scope="row">1</th>
@@ -1020,10 +1020,15 @@
                         </tr>
                       </tbody>
                     </table>
-                    <p class="text-right">Subtotal $200</p>
                     <!-- EX: row['subtotal'] -->
+                    <!-- <p class="text-right">Subtotal $200</p>
                     <p class="text-right"><small><em>Delivery fee $0</em></small></p>
-                    <p class="text-right">Total Price $200</p>
+                    <p class="text-right">Total Price $200</p> -->
+                    <div class="modal-footer">
+                      <p class="text-right" id="Subtotal"></p>
+                      <p class="text-right" id="Delivery_fee"></p>
+                      <p class="text-right" id="Total_price"></p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1033,38 +1038,76 @@
         </div>
       </div>
       <script type="text/javascript">
-        function updateShopOrderDetail(){
+        function completeShopOrder(OID){
+          // implement your order complete function
+          // !!! careful, use parseInt(OID) here since OID is str
+          // and refresh order table
+          searchShopOrders();
+        }
+        function cancelShopOrder(OID){
+          // implement your order cancel function
+          // !!! careful, use parseInt(OID) here since OID is str
+          // and refresh order table
+          searchShopOrders();
+        }
+        function updateShopOrderDetail(OID){
+          $.ajax({
+            url: 'http://' + window.location.host + "/order-detail",
+            method: "POST",
+            data: {'OID': parseInt(OID)},
+            async: false,
+            success: function (Order_info) {
+              body = ""
+              var Products = Order_info.Products
+              for (let i = 0; i < Products.length; i++) {
+                p = Products[i]
+                body += "<tr>"
+                body += `<th scope="row">${i + 1}</th>`
+                body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
+                          <td>${p.P_name}</td>
+                          <td>${p.P_price}</td>
+                          <td>${p.Order_quantity}</td>`
+                body += "</tr>"
+              }
+              $('#ShopOrderDetail-1 #ShopOrderDetail-T-1').html(body);
+              $('#ShopOrderDetail-1 #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
+              $('#ShopOrderDetail-1 #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
+              $('#ShopOrderDetail-1 #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
 
+              $('#ShopOrderDetail-1').modal('show')
+            },
+            error: function (jqxhr, textStatus, errorThrown) {
+              alert(jqxhr.responseText)
+            }
+          })
         }
         ShopOrders = [];
         function updateShopOrderTable() {
           var table = '', filter = document.getElementById("shop-order-status").value;
           $.each(ShopOrders, function (i, order) {
-              if (filter != 'All' && order.Status != filter) {return True;}
-              table += '<tr><th scope="row">' + order.OID + '</th>';
-              table += '<td>' + order.Status + '</td>';
-              table += '<td>' + order.start_time + '</td>';
-              table += '<td>' + order.end_time + '</td>';
-              table += '<td>' + order.S_name + '</td>';
-              table += '<td>' + order.total_price + '</td>';
+            if (filter != 'All' && order.Status != filter) {return True;}
+            table += '<tr><th scope="row">' + order.OID + '</th>';
+            table += '<td>' + order.Status + '</td>';
+            table += '<td>' + order.start_time + '</td>';
+            table += '<td>' + order.end_time + '</td>';
+            table += '<td>' + order.S_name + '</td>';
+            table += '<td>' + order.total_price + '</td>';
+            table += `
+              <td>
+                <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
+                onclick="updateShopOrderDetail(this.name)"> Order Details</button>
+              </td>`;
+            if (order.Status == 'Not finished') {
               table += `
-                <td>
-                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
-                  onclick="updateShopOrderDetail(this.name)"> Order Details</button>
-                </td>`;
-              if (order.Status == 'Not finished') {
-                table += `
-                <td>
-                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-success " 
-                  onclick="none"> Done</button>
-                </td>
-                <td>
-                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-danger " 
-                  onclick="none"> Cancel</button>
-                </td></tr>`
-              }
-            });
-            $("#MyOrder-update").html(table);
+              <td>
+                <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-success " 
+                onclick="completeShopOrder(this.name)"> Done</button>
+                <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-danger " 
+                onclick="cancelShopOrder(this.name)"> Cancel</button>
+              </td></tr>`
+            }
+          });
+          $("#ShopOrder-update").html(table);
         }
         function searchShopOrders(){
           $.ajax({
