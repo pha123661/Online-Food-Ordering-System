@@ -761,8 +761,8 @@ def search_transactionRecord():
             end as Trader,
             T_amount
         from Transaction_Record natural join Shop_Name, Users
-        where T_Object = UID
-        and T_Object = ?
+        where T_Subject = UID
+        and T_Subject = ?
         ''', (UID,)
     ).fetchall()
     transaction = [{'TID': TID, 'Action': Action, 'Time': Time, 'Trader': Trader, 'T_amount': T_amount}
