@@ -641,6 +641,9 @@ def total_price(OID, UID, O_type):
 
     # query product infos
     db.cursor().execute("""
+        drop table if exists PID_list
+    """)
+    db.cursor().execute("""
         create temp table PID_list(PID INTEGER PRIMARY KEY)
     """)
     for P in PIDs:
