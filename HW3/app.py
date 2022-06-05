@@ -748,8 +748,8 @@ def search_transactionRecord():
     db = get_db()
     rst = db.cursor().execute(
         '''
-        with Shop_Name(T_Object, S_name) as (
-                select T_Object, S_name 
+        with Shop_Name(TID, S_name) as (
+                select TID, S_name 
                 from Transaction_Record left join Stores
                 on T_Object = S_owner
             )
