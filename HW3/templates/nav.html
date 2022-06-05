@@ -860,7 +860,7 @@
             $.ajax({
               url: 'http://' + window.location.host + "/order-detail",
               method: "POST",
-              data: { 'OID': parseInt(OID) },
+              data: { 'OID': parseInt(OID), 'UID': parseInt(UID) },
               async: false,
               success: function (Order_info) {
                 body = ""
@@ -879,8 +879,6 @@
                 $('#MyOrderDetail-1 #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
                 $('#MyOrderDetail-1 #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
                 $('#MyOrderDetail-1 #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
-
-                $('#MyOrderDetail-1').modal('show')
               },
               error: function (jqxhr, textStatus, errorThrown) {
                 alert(jqxhr.responseText)
@@ -1040,97 +1038,95 @@
             <!-- for loop2 should end here -->
           </div>
         </div>
-      </div>
-      <script type="text/javascript">
-        function completeShopOrder(OID) {
-          // implement your order complete function
-          // !!! careful, use parseInt(OID) here since OID is str
-          // and refresh order table
-          searchShopOrders();
-        }
-        function cancelShopOrder(OID) {
-          // implement your order cancel function
-          // !!! careful, use parseInt(OID) here since OID is str
-          // and refresh order table
-          searchShopOrders();
-        }
-        function updateShopOrderDetail(OID) {
-          $.ajax({
-            url: 'http://' + window.location.host + "/order-detail",
-            method: "POST",
-            data: { 'OID': parseInt(OID) },
-            async: false,
-            success: function (Order_info) {
-              body = ""
-              var Products = Order_info.Products
-              for (let i = 0; i < Products.length; i++) {
-                p = Products[i]
-                body += "<tr>"
-                body += `<th scope="row">${i + 1}</th>`
-                body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
-                          <td>${p.P_name}</td>
-                          <td>${p.P_price}</td>
-                          <td>${p.Order_quantity}</td>`
-                body += "</tr>"
+        <script type="text/javascript">
+          function completeShopOrder(OID) {
+            // implement your order complete function
+            // !!! careful, use parseInt(OID) here since OID is str
+            // and refresh order table
+            searchShopOrders();
+          }
+          function cancelShopOrder(OID) {
+            // implement your order cancel function
+            // !!! careful, use parseInt(OID) here since OID is str
+            // and refresh order table
+            searchShopOrders();
+          }
+          function updateShopOrderDetail(OID) {
+            $.ajax({
+              url: 'http://' + window.location.host + "/order-detail",
+              method: "POST",
+              data: { 'OID': parseInt(OID), 'UID': parseInt(UID) },
+              async: false,
+              success: function (Order_info) {
+                body = ""
+                var Products = Order_info.Products
+                for (let i = 0; i < Products.length; i++) {
+                  p = Products[i]
+                  body += "<tr>"
+                  body += `<th scope="row">${i + 1}</th>`
+                  body += `<td><img src="data:image/${p.P_imagetype};base64, ${atob(p.P_image)}" style="width: 72px; height: 72px;"></td>
+                            <td>${p.P_name}</td>
+                            <td>${p.P_price}</td>
+                            <td>${p.Order_quantity}</td>`
+                  body += "</tr>"
+                }
+                $('#ShopOrderDetail-1 #ShopOrderDetail-T-1').html(body);
+                $('#ShopOrderDetail-1 #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
+                $('#ShopOrderDetail-1 #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
+                $('#ShopOrderDetail-1 #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert(jqxhr.responseText)
               }
-              $('#ShopOrderDetail-1 #ShopOrderDetail-T-1').html(body);
-              $('#ShopOrderDetail-1 #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
-              $('#ShopOrderDetail-1 #Delivery_fee').html(`<small><em>Delivery fee $${Order_info.Delivery_fee}</small></em>`)
-              $('#ShopOrderDetail-1 #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
-
-              $('#ShopOrderDetail-1').modal('show')
-            },
-            error: function (jqxhr, textStatus, errorThrown) {
-              alert(jqxhr.responseText)
-            }
-          })
-        }
-        ShopOrders = [];
-        function updateShopOrderTable() {
-          var table = '', filter = document.getElementById("shop-order-status").value;
-          $.each(ShopOrders, function (i, order) {
-            if (filter != 'All' && order.Status != filter) { return True; }
-            table += '<tr><th scope="row">' + order.OID + '</th>';
-            table += '<td>' + order.Status + '</td>';
-            table += '<td>' + order.start_time + '</td>';
-            table += '<td>' + order.end_time + '</td>';
-            table += '<td>' + order.S_name + '</td>';
-            table += '<td>' + order.total_price + '</td>';
-            table += `
-              <td>
-                <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
-                onclick="updateShopOrderDetail(this.name)"> Order Details</button>
-              </td>`;
-            if (order.Status == 'Not finished') {
+            })
+          }
+          ShopOrders = [];
+          function updateShopOrderTable() {
+            var table = '', filter = document.getElementById("shop-order-status").value;
+            $.each(ShopOrders, function (i, order) {
+              if (filter != 'All' && order.Status != filter) { return True; }
+              table += '<tr><th scope="row">' + order.OID + '</th>';
+              table += '<td>' + order.Status + '</td>';
+              table += '<td>' + order.start_time + '</td>';
+              table += '<td>' + order.end_time + '</td>';
+              table += '<td>' + order.S_name + '</td>';
+              table += '<td>' + order.total_price + '</td>';
               table += `
-              <td>
-                <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-success " 
-                onclick="completeShopOrder(this.name)"> Done</button>
-                <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-danger " 
-                onclick="cancelShopOrder(this.name)"> Cancel</button>
-              </td></tr>`
-            } else {
-              table += '<td></td></tr>'
-            }
-          });
-          $("#ShopOrder-update").html(table);
-        }
-        function searchShopOrders() {
-          $.ajax({
-            url: 'http://' + window.location.host + "/search-ShopOrders",
-            method: "POST",
-            data: { 'UID': UID },
-            async: false,
-            success: function (data) {
-              ShopOrders = data.tableRow;
-              updateShopOrderTable();
-            },
-            error: function (jqxhr, textStatus, errorThrown) {
-              alert("error: " + textStatus)
-            }
-          })
-        }
-      </script>
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="#ShopOrderDetail-1" class="btn btn-info " 
+                  onclick="updateShopOrderDetail(this.name)"> Order Details</button>
+                </td>`;
+              if (order.Status == 'Not finished') {
+                table += `
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-success " 
+                  onclick="completeShopOrder(this.name)"> Done</button>
+                  <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-danger " 
+                  onclick="cancelShopOrder(this.name)"> Cancel</button>
+                </td></tr>`
+              } else {
+                table += '<td></td></tr>'
+              }
+            });
+            $("#ShopOrder-update").html(table);
+          }
+          function searchShopOrders() {
+            $.ajax({
+              url: 'http://' + window.location.host + "/search-ShopOrders",
+              method: "POST",
+              data: { 'UID': UID },
+              async: false,
+              success: function (data) {
+                ShopOrders = data.tableRow;
+                updateShopOrderTable();
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert("error: " + textStatus)
+              }
+            })
+          }
+        </script>
+      </div>
 
       <!-- Transacrion Records -->
       <div id="TsRecord" class="tab-pane fade">

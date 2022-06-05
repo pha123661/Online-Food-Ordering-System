@@ -555,7 +555,15 @@ def order_detail():
         PIDs = []
         Quantities = []
         OID = request.form['OID']
-
+        rst = db.cursor().execute(
+            '''
+            select O_type
+            from Orders
+            where OID = ?
+            ''', (OID,)
+        ).fetchone()
+        O_type = rst[0]
+        
         rst = db.cursor().execute(
             '''
             select PID, Quantity
@@ -599,12 +607,12 @@ def order_detail():
 
     # calculate fee
     lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
-                                     (session['user_info']['UID'], )).fetchone()
+                                     (int(request.form['UID']), )).fetchone()
     lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
 
-    Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
+    Delivery_fee = 0 if O_type == 0 else max(
         int(round(distance * 10)), 10)
 
     return jsonify({
@@ -614,7 +622,7 @@ def order_detail():
     }), 200
 
 
-def total_price(OID):
+def total_price(OID, UID, O_type):
     db = get_db()
     rst = db.cursor().execute(
         '''
@@ -622,7 +630,7 @@ def total_price(OID):
         from O_Contains_P
         where OID = ?
         ''',
-        OID
+        (OID,)
     ).fetchall()
 
     PIDs = []
@@ -653,12 +661,12 @@ def total_price(OID):
 
     # calculate fee
     lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
-                                     (session['user_info']['UID'], )).fetchone()
+                                     (UID, )).fetchone()
     lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
 
-    Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
+    Delivery_fee = 0 if O_type == 0 else max(
         int(round(distance * 10)), 10)
 
     total_price = Subtotal + Delivery_fee
@@ -668,7 +676,7 @@ def total_price(OID):
 
 @app.route("/search-MyOrders", methods=['POST'])
 def search_MyOrders():
-    UID = request.form['UID']
+    UID = int(request.form['UID'])
     db = get_db()
     rst = db.cursor().execute(
         '''
@@ -682,16 +690,16 @@ def search_MyOrders():
             case
                 when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                 else ''
-            end as end_time, S_name, OID
+            end as end_time, S_name, OID, O_type
         from Process_Order natural join Orders natural join Stores
         where UID = ?
         ''', (UID,)
     ).fetchall()
     table = {'tableRow': []}
     append = table['tableRow'].append
-    for Status, start_time, end_time, S_name, OID in rst:
+    for Status, start_time, end_time, S_name, OID, O_type in rst:
         append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                'OID': OID, 'total_price': total_price(OID)})
+                'OID': OID, 'total_price': total_price(OID, UID, O_type)})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -701,7 +709,7 @@ def search_MyOrders():
 
 @app.route('/search-ShopOrders', methods=['POST'])
 def search_ShopOrders():
-    UID = request.form['UID']
+    UID = int(request.form['UID'])
     db = get_db()
     rst = db.cursor().execute(
         '''
@@ -727,14 +735,14 @@ def search_ShopOrders():
                     when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                     else ''
                 end as end_time,
-                S_name
+                S_name, O_type
             from Orders natural join Stores
             where SID = ?
             ''', (SID[0],)
         ).fetchall()
-        for OID, Status, start_time, end_time, S_name in rst:
+        for OID, Status, start_time, end_time, S_name, O_type in rst:
             append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                    'OID': OID, 'total_price': total_price(OID)})
+                    'OID': OID, 'total_price': total_price(OID, UID, O_type)})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
