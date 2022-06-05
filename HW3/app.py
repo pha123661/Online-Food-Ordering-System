@@ -120,7 +120,7 @@ def order_made():
     '''
     called when any order has been made
     '''
-    #print(request.json)
+    # print(request.json)
     # try:
     #     PIDs = request.form.getlist('PIDs')
     #     Quantities = [int(n) for n in request.form.getlist('Quantities')]
@@ -133,7 +133,7 @@ def order_made():
     #     return redirect(url_for('nav'))
 
     json_data = request.json
-    #print(json_data)
+    print(json_data['S_owner'])
 
     # get user data
     UID = session['user_info']['UID']
@@ -145,11 +145,12 @@ def order_made():
         ''', (UID,)).fetchone()
 
     # get shop owner UID
-    shop_owner_UID = db.cursor().execute('''
-        select S_owner
+    shop_owner_UID = json_data['S_owner']
+    SID = db.cursor().execute('''
+        select SID
         from Stores
-        where SID = ?
-    ''', (json_data['SID'],)).fetchone()['S_owner']
+        where S_owner = ?
+    ''', (shop_owner_UID,)).fetchone()['SID']
     print("shop_owner_UID:", shop_owner_UID)
 
     # check all ordered products one by one
@@ -176,13 +177,14 @@ def order_made():
         return redirect(url_for('nav'))
     # check if product quantity sufficient
     if len(non_sufficient_product_name) > 0:
-        flash("Failed to create order: insufficient quantity of {}".format(non_sufficient_product_name))
+        flash("Failed to create order: insufficient quantity of {}".format(
+            non_sufficient_product_name))
         return redirect(url_for('nav'))
     # check if wallet ballence sufficient
     if json_data['Subtotal'] > user_info['U_balance']:
         flash("Failed to create order: insufficient balance")
         return redirect(url_for('nav'))
-    
+
     # create successful, update database
     try:
         # update Users
@@ -198,14 +200,14 @@ def order_made():
             update Users
             set U_balance = U_balance + ?
             where UID = ?
-        ''', (json_data['Subtotal'], shop_owner_UID))        
+        ''', (json_data['Subtotal'], shop_owner_UID))
 
         # update Orders
-        time = datetime.datetime.now() 
+        time = datetime.datetime.now()
         rst = db.cursor().execute('''
             insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
             values (?, ?, ?, ?, ?, ?, ?)
-        ''', (0, time, None, json_data['Distance'], product_amount_count, json_data['Type'], json_data['SID']))
+        ''', (0, time, None, json_data['Distance'], product_amount_count, json_data['Type'], SID))
 
         # update Process_Order
         OID = rst.lastrowid
@@ -242,17 +244,16 @@ def order_made():
             ''', (OID, product['PID'], product['Order_quantity']))
 
     except:
+        db.rollback()
         print("oops something went wrong")
         flash("Failed to create order: please try again")
         return redirect(url_for('nav'))
 
     print("update successful")
-
     db.commit()
     # update session
     session['user_info']['U_balance'] -= json_data['Subtotal']
     return redirect(url_for('nav'))
-
 
 
 @app.route("/order_preview", methods=['POST'])
@@ -303,7 +304,7 @@ def order_preview():
     # calculate fee
     lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
                                      (session['user_info']['UID'], )).fetchone()
-    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
 
@@ -314,9 +315,9 @@ def order_preview():
         'Products': Products,
         'Subtotal': Subtotal,
         'Delivery_fee': Delivery_fee,
-        'Distance' : distance,
-        'Type' : request.form['Dilivery'],
-        'SID' : Products[0]['P_owner']
+        'Distance': distance,
+        'Type': request.form['Dilivery'],
+        'S_owner': Products[0]['P_owner']
     }), 200
 
 
@@ -549,16 +550,16 @@ def order_detail():
         PIDs = []
         Quantities = []
         OID = request.form['OID']
-        
+
         rst = db.cursor().execute(
             '''
             select PID, Quantity
             from O_Contains_P
             where OID = ?
-            ''', 
+            ''',
             (OID,)
         ).fetchall()
-        
+
         for PID, quantity in rst:
             PIDs.append(PID)
             Quantities.append(quantity)
@@ -618,7 +619,7 @@ def total_price(OID):
         ''',
         OID
     ).fetchall()
-    
+
     PIDs = []
     Quantities = []
     for PID, quantity in rst:
@@ -637,7 +638,7 @@ def total_price(OID):
     rst = db.cursor().execute("""
     select * from PID_list natural join Products
     """).fetchall()
-    
+
     Products = [dict(r) for r in rst]
 
     Subtotal = 0
@@ -656,7 +657,7 @@ def total_price(OID):
         int(round(distance * 10)), 10)
 
     total_price = Subtotal + Delivery_fee
-    
+
     return total_price
 
 
@@ -684,7 +685,7 @@ def search_MyOrders():
     table = {'tableRow': []}
     append = table['tableRow'].append
     for Status, start_time, end_time, S_name, OID in rst:
-        append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name, 
+        append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
                 'OID': OID, 'total_price': total_price(OID)})
     print(table['tableRow'])
     response = jsonify(table)
@@ -727,7 +728,7 @@ def search_ShopOrders():
             ''', (SID[0],)
         ).fetchall()
         for OID, Status, start_time, end_time, S_name in rst:
-            append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name, 
+            append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
                     'OID': OID, 'total_price': total_price(OID)})
     print(table['tableRow'])
     response = jsonify(table)
