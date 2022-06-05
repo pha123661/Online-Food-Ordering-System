@@ -241,8 +241,6 @@ def order_made():
                 values (?, ?, ?)
             ''', (OID, product['PID'], product['Order_quantity']))
 
-        # update session
-        session['user_info']['U_balance'] -= json_data['Subtotal']
     except:
         print("oops something went wrong")
         flash("Failed to create order: please try again")
@@ -251,6 +249,8 @@ def order_made():
     print("update successful")
 
     db.commit()
+    # update session
+    session['user_info']['U_balance'] -= json_data['Subtotal']
     return redirect(url_for('nav'))
 
 
