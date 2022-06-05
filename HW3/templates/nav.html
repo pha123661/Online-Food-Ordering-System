@@ -475,7 +475,9 @@
                         data: JSON.stringify(Home_Order_Info),
                         async: false,
                         success: function (data) {
-                          alert(JSON.stringify(data))
+                          console.log(data)
+                          alert(data.message);
+                          location.reload(true);
                         },
                         error: function (jqxhr, textStatus, errorThrown) {
                           alert(JSON.parse(jqxhr.responseText).message)
@@ -724,7 +726,8 @@
         <h3>My Orders</h3>
         <!-- HOW-TO: Filter table rows based on selected value
           https://stackoverflow.com/questions/41554154/filter-table-rows-based-on-select-value -->
-        <select class="form-control" name="Status" id="order-status" style="width:150px; " onchange="updateMyOrderTable()">
+        <select class="form-control" name="Status" id="order-status" style="width:150px; "
+          onchange="updateMyOrderTable()">
           <option>All</option>
           <option>Finished</option>
           <option>Not finished</option>
@@ -853,11 +856,11 @@
             // and refresh order table
             searchMyOrders()
           }
-          function updateOrderDetail(OID){
+          function updateOrderDetail(OID) {
             $.ajax({
               url: 'http://' + window.location.host + "/order-detail",
               method: "POST",
-              data: {'OID': parseInt(OID)},
+              data: { 'OID': parseInt(OID) },
               async: false,
               success: function (Order_info) {
                 body = ""
@@ -885,10 +888,10 @@
             })
           }
           MyOrders = []
-          function updateMyOrderTable(){
+          function updateMyOrderTable() {
             var table = '', filter = document.getElementById("order-status").value;
             $.each(MyOrders, function (i, order) {
-              if (filter != 'All' && order.Status != filter) {return True;}
+              if (filter != 'All' && order.Status != filter) { return True; }
               table += '<tr><th scope="row">' + order.OID + '</th>';
               table += '<td>' + order.Status + '</td>';
               table += '<td>' + order.start_time + '</td>';
@@ -907,11 +910,11 @@
             });
             $("#MyOrder-update").html(table);
           }
-          function searchMyOrders(){
+          function searchMyOrders() {
             $.ajax({
               url: 'http://' + window.location.host + "/search-MyOrders",
               method: "POST",
-              data: {'UID': UID},
+              data: { 'UID': UID },
               async: false,
               success: function (data) {
                 MyOrders = data.tableRow;
@@ -928,7 +931,8 @@
       <!-- Shop Orders -->
       <div id="ShopOrder" class="tab-pane fade">
         <h3>Shop Orders</h3>
-        <select class="form-control" name="Status" id="shop-order-status" style="width:150px; " onchange="updateShopOrderTable()">
+        <select class="form-control" name="Status" id="shop-order-status" style="width:150px; "
+          onchange="updateShopOrderTable()">
           <option>All</option>
           <option>Finished</option>
           <option>Not finished</option>
@@ -1038,23 +1042,23 @@
         </div>
       </div>
       <script type="text/javascript">
-        function completeShopOrder(OID){
+        function completeShopOrder(OID) {
           // implement your order complete function
           // !!! careful, use parseInt(OID) here since OID is str
           // and refresh order table
           searchShopOrders();
         }
-        function cancelShopOrder(OID){
+        function cancelShopOrder(OID) {
           // implement your order cancel function
           // !!! careful, use parseInt(OID) here since OID is str
           // and refresh order table
           searchShopOrders();
         }
-        function updateShopOrderDetail(OID){
+        function updateShopOrderDetail(OID) {
           $.ajax({
             url: 'http://' + window.location.host + "/order-detail",
             method: "POST",
-            data: {'OID': parseInt(OID)},
+            data: { 'OID': parseInt(OID) },
             async: false,
             success: function (Order_info) {
               body = ""
@@ -1085,7 +1089,7 @@
         function updateShopOrderTable() {
           var table = '', filter = document.getElementById("shop-order-status").value;
           $.each(ShopOrders, function (i, order) {
-            if (filter != 'All' && order.Status != filter) {return True;}
+            if (filter != 'All' && order.Status != filter) { return True; }
             table += '<tr><th scope="row">' + order.OID + '</th>';
             table += '<td>' + order.Status + '</td>';
             table += '<td>' + order.start_time + '</td>';
@@ -1111,11 +1115,11 @@
           });
           $("#ShopOrder-update").html(table);
         }
-        function searchShopOrders(){
+        function searchShopOrders() {
           $.ajax({
             url: 'http://' + window.location.host + "/search-ShopOrders",
             method: "POST",
-            data: {'UID': UID},
+            data: { 'UID': UID },
             async: false,
             success: function (data) {
               ShopOrders = data.tableRow;
@@ -1131,7 +1135,8 @@
       <!-- Transacrion Records -->
       <div id="TsRecord" class="tab-pane fade">
         <h3>Transacrion Records</h3>
-        <select class="form-control" name="Status" id="transaction-status" style="width:150px; " onchange="updateTransactionRecord()">
+        <select class="form-control" name="Status" id="transaction-status" style="width:150px; "
+          onchange="updateTransactionRecord()">
           <option>All</option>
           <option>Payment</option>
           <option>Recieve</option>
@@ -1177,7 +1182,7 @@
         function updateTransactionRecord() {
           var table = '', filter = document.getElementById("transaction-status").value;
           $.each(transactions, function (i, transaction) {
-            if (filter != 'All' && transaction.Action != filter) {return True;}
+            if (filter != 'All' && transaction.Action != filter) { return True; }
             table += '<tr><th scope="row">' + transaction.TID + '</th>';
             table += '<td>' + transaction.Action + '</td>';
             table += '<td>' + transaction.Time + '</td>';
@@ -1190,7 +1195,7 @@
           $.ajax({
             url: 'http://' + window.location.host + "/search-transactionRecord",
             type: "POST",
-            data: {'UID': UID},
+            data: { 'UID': UID },
             async: false,
             success: function (data) {
               transactions = data.tableRow

@@ -173,17 +173,20 @@ def order_made():
         product_amount_count += product['Order_quantity']
     # check if product exists
     if len(non_exist_product_name) > 0:
-        flash("Failed to create order: one or more products does not exist")
-        return redirect(url_for('nav'))
+        return jsonify({
+            'message': 'Failed to create order: one or more products does not exist'
+        }), 200
     # check if product quantity sufficient
     if len(non_sufficient_product_name) > 0:
-        flash("Failed to create order: insufficient quantity of {}".format(
-            non_sufficient_product_name))
-        return redirect(url_for('nav'))
+        return jsonify({
+            'message': "Failed to create order: insufficient quantity of {}".format(
+                non_sufficient_product_name)
+        }), 200
     # check if wallet ballence sufficient
     if json_data['Subtotal'] > user_info['U_balance']:
-        flash("Failed to create order: insufficient balance")
-        return redirect(url_for('nav'))
+        return jsonify({
+            'message': "Failed to create order: insufficient balance"
+        }), 200
 
     # create successful, update database
     try:
@@ -245,15 +248,17 @@ def order_made():
 
     except:
         db.rollback()
-        print("oops something went wrong")
-        flash("Failed to create order: please try again")
-        return redirect(url_for('nav'))
+        return jsonify({
+            'message': 'Failed to create order: please try again'
+        }), 200
 
     print("update successful")
     db.commit()
     # update session
     session['user_info']['U_balance'] -= json_data['Subtotal']
-    return redirect(url_for('nav'))
+    return jsonify({
+        'message': 'Order made successfully'
+    }), 200
 
 
 @app.route("/order_preview", methods=['POST'])
@@ -1045,6 +1050,13 @@ def edit_price_and_quantity():
         if v == '':
             flash(f"Please check: '{k}' is not filled")
             return redirect(url_for("nav"))
+
+    try:
+        int(edit_price)
+        int(edit_quantity)
+    except ValueError:
+        flash("Invalid Value")
+        return redirect(url_for("nav"))
 
     # check formats:
     # price and quantity
