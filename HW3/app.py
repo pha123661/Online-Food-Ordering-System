@@ -665,7 +665,7 @@ def search_ShopOrders():
                 S_name
             from Orders natural join Stores
             where SID = ?
-            ''', (SID,)
+            ''', (SID[0],)
         ).fetchall()
         for OID, Status, start_time, end_time, S_name in rst:
             append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name, 
