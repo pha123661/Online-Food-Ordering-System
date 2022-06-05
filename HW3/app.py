@@ -135,9 +135,27 @@ def order_made():
     json_data = request.json
     #print(json_data)
 
+    # get user data
+    UID = session['user_info']['UID']
+    db = get_db()
+    user_info = db.cursor().execute('''
+        select *
+        from Users
+        where UID = ?
+        ''', (UID,)).fetchone()
+
+    # get shop owner UID
+    shop_owner_UID = db.cursor().execute('''
+        select S_owner
+        from Stores
+        where SID = ?
+    ''', (json_data['SID'],)).fetchone()['S_owner']
+    print("shop_owner_UID:", shop_owner_UID)
+
     # check all ordered products one by one
     non_exist_product_name = []
     non_sufficient_product_name = []
+    product_amount_count = 0
     for product in json_data['Products']:
         db = get_db()
         rst = db.cursor().execute('''
@@ -151,6 +169,7 @@ def order_made():
         # product exists, check if product is sufficient
         elif product['Order_quantity'] > rst['P_quantity']:
             non_sufficient_product_name.append(product['P_name'])
+        product_amount_count += product['Order_quantity']
     # check if product exists
     if len(non_exist_product_name) > 0:
         flash("Failed to create order: one or more products does not exist")
@@ -160,38 +179,78 @@ def order_made():
         flash("Failed to create order: insufficient quantity of {}".format(non_sufficient_product_name))
         return redirect(url_for('nav'))
     # check if wallet ballence sufficient
-    if json_data['Subtotal'] > session['user_info']['U_balance']:
+    if json_data['Subtotal'] > user_info['U_balance']:
         flash("Failed to create order: insufficient balance")
         return redirect(url_for('nav'))
     
     # create successful, update database
-    # update Users
-    db = get_db()
-    db.cursor().execute('''
-        update Users
-        set U_balance = ?
-        where UID = ?
-    ''', (session['user_info']['U_balance'] - json_data['Subtotal'], session['user_info']['UID']))
-    session['user_info']['U_balance'] = session['user_info']['U_balance'] - json_data['Subtotal']
+    try:
+        # update Users
+        # customer
+        db = get_db()
+        db.cursor().execute('''
+            update Users
+            set U_balance = U_balance - ?
+            where UID = ?
+        ''', (json_data['Subtotal'], user_info['UID']))
+        # shop owner
+        db.cursor().execute('''
+            update Users
+            set U_balance = U_balance + ?
+            where UID = ?
+        ''', (json_data['Subtotal'], shop_owner_UID))        
 
-    # update Orders
-    db.cursor().execute('''
-        insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
-        values (?, ?, ?, ?, ?, ?, ?)
-    ''', (0, datetime.datetime.now(), None, json_data['Distance'], len(json_data['Products']), json_data['Type'], json_data['SID']))
+        # update Orders
+        time = datetime.datetime.now() 
+        rst = db.cursor().execute('''
+            insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
+            values (?, ?, ?, ?, ?, ?, ?)
+        ''', (0, time, None, json_data['Distance'], product_amount_count, json_data['Type'], json_data['SID']))
 
-    #update Process_Order
+        # update Process_Order
+        OID = rst.lastrowid
+        db.cursor().execute('''
+            insert into Process_Order (UID, OID, PO_type)
+            values (?, ?, ?)
+        ''', (UID, OID, 0))
 
-    #update Transaction_Record
+        # update Transaction_Record
+        # user -> shop
+        db.cursor().execute('''
+            insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
+            values (?, ?, ?, ?, ?)
+        ''', (0, json_data['Subtotal'], time, UID, shop_owner_UID))
+        # shop <- user
+        db.cursor().execute('''
+            insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
+            values (?, ?, ?, ?, ?)
+        ''', (1, json_data['Subtotal'], time, shop_owner_UID, UID))
 
-    #update Products
+        # update Products
+        for product in json_data['Products']:
+            db.cursor().execute('''
+                update Products
+                set P_quantity = P_quantity - ?
+                where PID = ?
+            ''', (product['Order_quantity'], product['PID']))
 
-    #update O_Contains_P
+        # update O_Contains_P
+        for product in json_data['Products']:
+            db.cursor().execute('''
+                insert into O_Contains_P (OID, PID, Quantity)
+                values (?, ?, ?)
+            ''', (OID, product['PID'], product['Order_quantity']))
+
+        # update session
+        session['user_info']['U_balance'] -= json_data['Subtotal']
+    except:
+        print("oops something went wrong")
+        flash("Failed to create order: please try again")
+        return redirect(url_for('nav'))
 
     print("update successful")
 
     db.commit()
-
     return redirect(url_for('nav'))
 
 
