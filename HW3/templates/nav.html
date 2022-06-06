@@ -889,7 +889,7 @@
           function updateMyOrderTable() {
             var table = '', filter = document.getElementById("order-status").value;
             $.each(MyOrders, function (i, order) {
-              if (filter != 'All' && order.Status != filter) { return True; }
+              if (filter != 'All' && order.Status != filter) { return; }
               table += '<tr><th scope="row">' + order.OID + '</th>';
               table += '<td>' + order.Status + '</td>';
               table += '<td>' + order.start_time + '</td>';
@@ -1084,7 +1084,7 @@
           function updateShopOrderTable() {
             var table = '', filter = document.getElementById("shop-order-status").value;
             $.each(ShopOrders, function (i, order) {
-              if (filter != 'All' && order.Status != filter) { return True; }
+              if (filter != 'All' && order.Status != filter) { return; }
               table += '<tr><th scope="row">' + order.OID + '</th>';
               table += '<td>' + order.Status + '</td>';
               table += '<td>' + order.start_time + '</td>';
@@ -1133,10 +1133,10 @@
         <h3>Transacrion Records</h3>
         <select class="form-control" name="Status" id="transaction-status" style="width:150px; "
           onchange="updateTransactionRecord()">
-          <option>All</option>
-          <option>Payment</option>
-          <option>Recieve</option>
-          <option>Recharge</option>
+          <option value="All">All</option>
+          <option value="Payment">Payment</option>
+          <option value="Recieve">Recieve</option>
+          <option value="Recharge">Recharge</option>
         </select>
         <div class="row">
           <div class="col-xs-8">
@@ -1178,7 +1178,7 @@
         function updateTransactionRecord() {
           var table = '', filter = document.getElementById("transaction-status").value;
           $.each(transactions, function (i, transaction) {
-            if (filter != 'All' && transaction.Action != filter) { return True; }
+            if (filter != 'All' && transaction.Action != filter) { return; }
             table += '<tr><th scope="row">' + transaction.TID + '</th>';
             table += '<td>' + transaction.Action + '</td>';
             table += '<td>' + transaction.Time + '</td>';

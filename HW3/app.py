@@ -557,14 +557,13 @@ def order_detail():
         PIDs = []
         Quantities = []
         OID = request.form['OID']
-        rst = db.cursor().execute(
+        O_type, distance = db.cursor().execute(
             '''
-            select O_type
+            select O_type, O_distance
             from Orders
             where OID = ?
             ''', (OID,)
         ).fetchone()
-        O_type = rst[0]
 
         rst = db.cursor().execute(
             '''
@@ -608,12 +607,6 @@ def order_detail():
         Subtotal += r['P_price'] * q
 
     # calculate fee
-    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
-                                     (int(request.form['UID']), )).fetchone()
-    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
-                                     (Products[0]['P_owner'], )).fetchone()
-    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
-
     Delivery_fee = 0 if O_type == 0 else max(
         int(round(distance * 10)), 10)
 
@@ -627,7 +620,7 @@ def order_detail():
     }), 200
 
 
-def total_price(OID, UID, O_type):
+def total_price(OID, UID, O_type, distance):
     db = get_db()
     rst = db.cursor().execute(
         '''
@@ -665,19 +658,15 @@ def total_price(OID, UID, O_type):
         Subtotal += r['P_price'] * q
 
     # calculate fee
-    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
-                                     (UID, )).fetchone()
-    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
-                                     (Products[0]['P_owner'], )).fetchone()
-    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
-
     Delivery_fee = 0 if O_type == 0 else max(
         int(round(distance * 10)), 10)
 
     total_price = Subtotal + Delivery_fee
 
     # drop temp table
-    db.rollback()
+    db.cursor().execute("""
+        drop table if exists PID_list
+    """)
 
     return total_price
 
@@ -698,16 +687,16 @@ def search_MyOrders():
             case
                 when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                 else ''
-            end as end_time, S_name, OID, O_type
+            end as end_time, S_name, OID, O_type, O_distance
         from Process_Order natural join Orders natural join Stores
         where UID = ?
         ''', (UID,)
     ).fetchall()
     table = {'tableRow': []}
     append = table['tableRow'].append
-    for Status, start_time, end_time, S_name, OID, O_type in rst:
+    for Status, start_time, end_time, S_name, OID, O_type, O_distance in rst:
         append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                'OID': OID, 'total_price': total_price(OID, UID, O_type)})
+                'OID': OID, 'total_price': total_price(OID, UID, O_type, O_distance)})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -743,14 +732,14 @@ def search_ShopOrders():
                     when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                     else ''
                 end as end_time,
-                S_name, O_type
+                S_name, O_type, O_distance
             from Orders natural join Stores
             where SID = ?
             ''', (SID[0],)
         ).fetchall()
-        for OID, Status, start_time, end_time, S_name, O_type in rst:
+        for OID, Status, start_time, end_time, S_name, O_type, O_distance in rst:
             append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                    'OID': OID, 'total_price': total_price(OID, UID, O_type)})
+                    'OID': OID, 'total_price': total_price(OID, UID, O_type, O_distance)})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
