@@ -773,7 +773,7 @@ def search_transactionRecord():
         select TID, 
             case 
                 when T_action = 2 then 'Recharge'
-                when T_action = 1 then 'Collection'
+                when T_action = 1 then 'Recieve'
                 when T_action = 0 then 'Payment'
             end as Action, 
             strftime('%Y/%m/%d %H:%M', T_time) as Time,
