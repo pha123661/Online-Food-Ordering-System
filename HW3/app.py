@@ -1139,6 +1139,7 @@ def top_up():
 
     db.commit()
 
+    flash('Top-up successful')
     return redirect(url_for('nav'))
 
 
