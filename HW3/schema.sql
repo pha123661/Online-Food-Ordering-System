@@ -97,7 +97,7 @@ CREATE TABLE
         Quantity INT unsigned NOT NULL,
         PRIMARY key (OID, PID),
         FOREIGN key (OID) REFERENCES Orders(OID),
-        FOREIGN key (PID) REFERENCES Products(PID),
+        FOREIGN key (PID) REFERENCES Products(PID) ON DELETE CASCADE,
         -- constraints --
         CONSTRAINT Quantity_gt_zero CHECK (Quantity > 0)
     );

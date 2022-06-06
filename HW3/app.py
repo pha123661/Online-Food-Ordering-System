@@ -33,6 +33,7 @@ def get_db():
         db.row_factory = sqlite3.Row
         db.create_function('_GIO_DIS', 4, _distance_between_locations)
         g._database = db
+    db.cursor().execute("PRAGMA foreign_keys=ON")
     return db
 
 
@@ -181,7 +182,7 @@ def order_made():
                 non_sufficient_product_name)
         }), 200
     # check if wallet ballence sufficient
-    if json_data['Subtotal'] > user_info['U_balance']:
+    if json_data['Subtotal'] + json_data['Delivery_fee'] > user_info['U_balance']:
         return jsonify({
             'message': "Failed to create order: insufficient balance"
         }), 200
@@ -195,19 +196,19 @@ def order_made():
             update Users
             set U_balance = U_balance - ?
             where UID = ?
-        ''', (json_data['Subtotal'], user_info['UID']))
+        ''', (json_data['Subtotal'] + json_data['Delivery_fee'], user_info['UID']))
         # shop owner
         db.cursor().execute('''
             update Users
             set U_balance = U_balance + ?
             where UID = ?
-        ''', (json_data['Subtotal'], shop_owner_UID))
+        ''', (json_data['Subtotal'] + json_data['Delivery_fee'], shop_owner_UID))
 
         # update Orders
         rst = db.cursor().execute('''
             insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
             values (?, datetime('now'), ?, ?, ?, ?, ?)
-        ''', (0, None, json_data['Distance'], json_data['Subtotal'], json_data['Type'], SID))
+        ''', (0, None, json_data['Distance'], json_data['Subtotal'] + json_data['Delivery_fee'], json_data['Type'], SID))
 
         # update Process_Order
         OID = rst.lastrowid
@@ -221,12 +222,12 @@ def order_made():
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
             values (?, ?, datetime('now'), ?, ?)
-        ''', (0, -json_data['Subtotal'], UID, shop_owner_UID))
+        ''', (0, -(json_data['Subtotal'] + json_data['Delivery_fee']), UID, shop_owner_UID))
         # shop <- user
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
             values (?, ?, datetime('now'), ?, ?)
-        ''', (1, json_data['Subtotal'], shop_owner_UID, UID))
+        ''', (1, json_data['Subtotal'] + json_data['Delivery_fee'], shop_owner_UID, UID))
 
         # update Products
         for product in json_data['Products']:
@@ -252,7 +253,7 @@ def order_made():
     print("update successful")
     db.commit()
     # update session
-    session['user_info']['U_balance'] -= json_data['Subtotal']
+    session['user_info']['U_balance'] -= json_data['Subtotal']+json_data['Delivery_fee']
     return jsonify({
         'message': 'Order made successfully'
     }), 200
