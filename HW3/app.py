@@ -156,7 +156,6 @@ def order_made():
     # check all ordered products one by one
     non_exist_product_name = []
     non_sufficient_product_name = []
-    product_amount_count = 0
     for product in json_data['Products']:
         db = get_db()
         rst = db.cursor().execute('''
@@ -170,7 +169,6 @@ def order_made():
         # product exists, check if product is sufficient
         elif product['Order_quantity'] > rst['P_quantity']:
             non_sufficient_product_name.append(product['P_name'])
-        product_amount_count += product['Order_quantity']
     # check if product exists
     if len(non_exist_product_name) > 0:
         return jsonify({
@@ -209,7 +207,7 @@ def order_made():
         rst = db.cursor().execute('''
             insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
             values (?, datetime('now'), ?, ?, ?, ?, ?)
-        ''', (0, None, json_data['Distance'], product_amount_count, json_data['Type'], SID))
+        ''', (0, None, json_data['Distance'], json_data['Subtotal'], json_data['Type'], SID))
 
         # update Process_Order
         OID = rst.lastrowid
