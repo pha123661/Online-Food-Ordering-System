@@ -223,7 +223,7 @@ def order_made():
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
             values (?, ?, datetime('now'), ?, ?)
-        ''', (0, json_data['Subtotal'], UID, shop_owner_UID))
+        ''', (0, -json_data['Subtotal'], UID, shop_owner_UID))
         # shop <- user
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
