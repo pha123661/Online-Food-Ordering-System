@@ -316,6 +316,9 @@ def order_preview():
     Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
         int(round(distance * 10)), 10)
 
+    # drop temp table
+    db.rollback()
+
     return jsonify({
         'Products': Products,
         'Subtotal': Subtotal,
@@ -563,7 +566,7 @@ def order_detail():
             ''', (OID,)
         ).fetchone()
         O_type = rst[0]
-        
+
         rst = db.cursor().execute(
             '''
             select PID, Quantity
@@ -615,6 +618,9 @@ def order_detail():
     Delivery_fee = 0 if O_type == 0 else max(
         int(round(distance * 10)), 10)
 
+    # drop temp table
+    db.rollback()
+
     return jsonify({
         'Products': Products,
         'Subtotal': Subtotal,
@@ -640,9 +646,6 @@ def total_price(OID, UID, O_type):
         Quantities.append(quantity)
 
     # query product infos
-    db.cursor().execute("""
-        drop table if exists PID_list
-    """)
     db.cursor().execute("""
         create temp table PID_list(PID INTEGER PRIMARY KEY)
     """)
@@ -673,6 +676,9 @@ def total_price(OID, UID, O_type):
         int(round(distance * 10)), 10)
 
     total_price = Subtotal + Delivery_fee
+
+    # drop temp table
+    db.rollback()
 
     return total_price
 
