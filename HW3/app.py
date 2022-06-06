@@ -597,7 +597,8 @@ def order_detail():
     """).fetchall()
 
     # decode image + calculate price
-    assert len(rst) == len(Quantities)
+    if len(rst) != len(Quantities):
+        return jsonify('some of products are no longer available'), 500
     Products = [dict(r) for r in rst]
 
     Subtotal = 0
