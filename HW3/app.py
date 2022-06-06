@@ -206,11 +206,10 @@ def order_made():
         ''', (json_data['Subtotal'], shop_owner_UID))
 
         # update Orders
-        time = datetime.datetime.now()
         rst = db.cursor().execute('''
             insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
-            values (?, ?, ?, ?, ?, ?, ?)
-        ''', (0, time, None, json_data['Distance'], product_amount_count, json_data['Type'], SID))
+            values (?, datetime('now'), ?, ?, ?, ?, ?)
+        ''', (0, None, json_data['Distance'], product_amount_count, json_data['Type'], SID))
 
         # update Process_Order
         OID = rst.lastrowid
@@ -223,13 +222,13 @@ def order_made():
         # user -> shop
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
-            values (?, ?, ?, ?, ?)
-        ''', (0, json_data['Subtotal'], time, UID, shop_owner_UID))
+            values (?, ?, datetime('now'), ?, ?)
+        ''', (0, json_data['Subtotal'], UID, shop_owner_UID))
         # shop <- user
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
-            values (?, ?, ?, ?, ?)
-        ''', (1, json_data['Subtotal'], time, shop_owner_UID, UID))
+            values (?, ?, datetime('now'), ?, ?)
+        ''', (1, json_data['Subtotal'], shop_owner_UID, UID))
 
         # update Products
         for product in json_data['Products']:
@@ -611,7 +610,7 @@ def order_detail():
     # calculate fee
     lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
                                      (int(request.form['UID']), )).fetchone()
-    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
 
@@ -668,7 +667,7 @@ def total_price(OID, UID, O_type):
     # calculate fee
     lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
                                      (UID, )).fetchone()
-    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where SID = ?",
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
                                      (Products[0]['P_owner'], )).fetchone()
     distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
 
