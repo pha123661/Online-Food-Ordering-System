@@ -757,6 +757,16 @@ def search_transactionRecord():
                 select TID, S_name 
                 from Transaction_Record left join Stores
                 on T_Object = S_owner
+            ),
+            Subj_Name(TID, Subj_name) as (
+                select TID, U_name as Subj_name
+                from Transaction_Record, Users
+                where T_Subject = UID
+            ),
+            Obj_Name(TID, Obj_name) as (
+                select TID, U_name as Obj_name
+                from Transaction_Record, Users
+                where T_Object = UID
             )
         select TID, 
             case 
@@ -766,13 +776,13 @@ def search_transactionRecord():
             end as Action, 
             strftime('%Y/%m/%d %H:%M', T_time) as Time,
             case
-                when T_action = 2 then U_name
+                when T_action = 2 then Subj_name
+                when T_action = 1 then Obj_name
                 else S_name
             end as Trader,
             T_amount
-        from Transaction_Record natural join Shop_Name, Users
-        where T_Subject = UID
-        and T_Subject = ?
+        from Transaction_Record natural join Subj_Name natural join Obj_Name natural join Shop_Name
+        where T_Subject = ?
         ''', (UID,)
     ).fetchall()
     transaction = [{'TID': TID, 'Action': Action, 'Time': Time, 'Trader': Trader, 'T_amount': T_amount}
