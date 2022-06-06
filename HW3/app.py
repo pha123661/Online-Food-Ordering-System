@@ -687,16 +687,16 @@ def search_MyOrders():
             case
                 when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                 else ''
-            end as end_time, S_name, OID, O_type, O_distance
+            end as end_time, S_name, OID, O_amount
         from Process_Order natural join Orders natural join Stores
         where UID = ?
         ''', (UID,)
     ).fetchall()
     table = {'tableRow': []}
     append = table['tableRow'].append
-    for Status, start_time, end_time, S_name, OID, O_type, O_distance in rst:
+    for Status, start_time, end_time, S_name, OID, O_amount in rst:
         append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                'OID': OID, 'total_price': total_price(OID, UID, O_type, O_distance)})
+                'OID': OID, 'total_price': O_amount})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -732,14 +732,14 @@ def search_ShopOrders():
                     when O_end_time is not NULL then strftime('%Y/%m/%d %H:%M', O_end_time)
                     else ''
                 end as end_time,
-                S_name, O_type, O_distance
+                S_name, O_amount
             from Orders natural join Stores
             where SID = ?
             ''', (SID[0],)
         ).fetchall()
-        for OID, Status, start_time, end_time, S_name, O_type, O_distance in rst:
+        for OID, Status, start_time, end_time, S_name, O_amount in rst:
             append({'Status': Status, 'start_time': start_time, 'end_time': end_time, 'S_name': S_name,
-                    'OID': OID, 'total_price': total_price(OID, UID, O_type, O_distance)})
+                    'OID': OID, 'total_price': O_amount})
     print(table['tableRow'])
     response = jsonify(table)
     response.headers.add('Access-Control-Allow-Origin', '*')
