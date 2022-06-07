@@ -373,7 +373,13 @@
                   </form>
                 </div>
                 <script type="text/javascript">
-                  var Home_Order_Info;
+                  // variable send to order_made()
+                  var Home_Order_Info = {
+                    "PIDs": [],
+                    "Quantities": [],
+                    "S_owner": null,
+                    "Type": null,
+                  }
                   $('document').ready(function () {
                     $('#Order_Preview').on('submit', function (event) {
                       event.preventDefault();
@@ -394,6 +400,9 @@
                                      <td>${p.P_price}</td>
                                      <td>${p.Order_quantity}</td>`
                             body += "</tr>"
+
+                            Home_Order_Info.PIDs.push(p.PID)
+                            Home_Order_Info.Quantities.push(p.Order_quantity)
                           }
                           $('#Order_Made #Order_Made_Menu').html(body);
                           $('#Order_Made #Subtotal').html(`Subtotal $${Order_info.Subtotal}`)
@@ -401,7 +410,8 @@
                           $('#Order_Made #Total_price').html(`Total Price $${Order_info.Delivery_fee + Order_info.Subtotal}`)
 
                           // global variable
-                          Home_Order_Info = Order_info;
+                          Home_Order_Info.S_owner = Order_info.S_owner
+                          Home_Order_Info.Type = Order_info.Type
 
 
                           $('#menu').modal('hide')
