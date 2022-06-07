@@ -146,7 +146,7 @@ def order_made():
         where UID = ?
         ''', (UID,)).fetchone()
 
-    # get shop owner UID
+    # get shop owner UID & shop SID
     shop_owner_UID = json_data['S_owner']
     SID = db.cursor().execute('''
         select SID
@@ -156,26 +156,25 @@ def order_made():
     print("shop_owner_UID:", shop_owner_UID)
 
     # check all ordered products one by one
-    non_exist_product_name = []
+    Subtotal = 0
     non_sufficient_product_name = []
-    for product in json_data['Products']:
+    for PID, Quantity in zip(json_data['PIDs'], json_data['Quantities']):
         db = get_db()
         rst = db.cursor().execute('''
             select *
             from Products
             where PID = ?
-            ''', (product['PID'],)).fetchone()
+            ''', (PID,)).fetchone()
         # check if product exists
         if rst is None:
-            non_exist_product_name.append(product['P_name'])
+            return jsonify({
+                'message': 'Failed to create order: one or more products does not exist'
+            }), 200            
         # product exists, check if product is sufficient
-        elif product['Order_quantity'] > rst['P_quantity']:
-            non_sufficient_product_name.append(product['P_name'])
-    # check if product exists
-    if len(non_exist_product_name) > 0:
-        return jsonify({
-            'message': 'Failed to create order: one or more products does not exist'
-        }), 200
+        elif Quantity > rst['P_quantity']:
+            non_sufficient_product_name.append(rst['P_name'])
+        # calculate subtotal
+        Subtotal += rst['P_price'] * Quantity
     # check if product quantity sufficient
     if len(non_sufficient_product_name) > 0:
         return jsonify({
@@ -183,7 +182,17 @@ def order_made():
                 non_sufficient_product_name)
         }), 200
     # check if wallet ballence sufficient
-    if json_data['Subtotal'] + json_data['Delivery_fee'] > user_info['U_balance']:
+    # calculate fee
+    lat1, lon1 = db.cursor().execute("select U_latitude, U_longitude from Users where UID = ?",
+                                     (UID, )).fetchone()
+    lat2, lon2 = db.cursor().execute("select S_latitude, S_longitude from Stores where S_owner = ?",
+                                     (shop_owner_UID, )).fetchone()
+    distance = float(_distance_between_locations(lat1, lon1, lat2, lon2))
+
+    Delivery_fee = 0 if json_data['Type'] == '0' else max(
+        int(round(distance * 10)), 10)
+    Total = Subtotal + Delivery_fee
+    if Total > user_info['U_balance']:
         return jsonify({
             'message': "Failed to create order: insufficient balance"
         }), 200
@@ -197,19 +206,19 @@ def order_made():
             update Users
             set U_balance = U_balance - ?
             where UID = ?
-        ''', (json_data['Subtotal'] + json_data['Delivery_fee'], user_info['UID']))
+        ''', (Total, user_info['UID']))
         # shop owner
         db.cursor().execute('''
             update Users
             set U_balance = U_balance + ?
             where UID = ?
-        ''', (json_data['Subtotal'] + json_data['Delivery_fee'], shop_owner_UID))
+        ''', (Total, shop_owner_UID))
 
         # update Orders
         rst = db.cursor().execute('''
             insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
             values (?, datetime('now'), ?, ?, ?, ?, ?)
-        ''', (0, None, json_data['Distance'], json_data['Subtotal'] + json_data['Delivery_fee'], json_data['Type'], SID))
+        ''', (0, None, distance, Total, json_data['Type'], SID))
 
         # update Process_Order
         OID = rst.lastrowid
@@ -223,27 +232,27 @@ def order_made():
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
             values (?, ?, datetime('now'), ?, ?)
-        ''', (0, -(json_data['Subtotal'] + json_data['Delivery_fee']), UID, shop_owner_UID))
+        ''', (0, -Total, UID, shop_owner_UID))
         # shop <- user
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
             values (?, ?, datetime('now'), ?, ?)
-        ''', (1, json_data['Subtotal'] + json_data['Delivery_fee'], shop_owner_UID, UID))
+        ''', (1, Total, shop_owner_UID, UID))
 
         # update Products
-        for product in json_data['Products']:
+        for PID, Quantity in zip(json_data['PIDs'], json_data['Quantities']):
             db.cursor().execute('''
                 update Products
                 set P_quantity = P_quantity - ?
                 where PID = ?
-            ''', (product['Order_quantity'], product['PID']))
+            ''', (Quantity, PID))
 
         # update O_Contains_P
-        for product in json_data['Products']:
+        for PID, Quantity in zip(json_data['PIDs'],json_data['Quantities']):
             db.cursor().execute('''
                 insert into O_Contains_P (OID, PID, Quantity)
                 values (?, ?, ?)
-            ''', (OID, product['PID'], product['Order_quantity']))
+            ''', (OID, PID, Quantity))
 
     except:
         db.rollback()
@@ -254,8 +263,7 @@ def order_made():
     print("update successful")
     db.commit()
     # update session
-    session['user_info']['U_balance'] -= json_data['Subtotal'] + \
-        json_data['Delivery_fee']
+    session['user_info']['U_balance'] -= Total
     return jsonify({
         'message': 'Order made successfully'
     }), 200
