@@ -117,25 +117,26 @@ def index():
 
 
 @app.route("/order_made", methods=['POST'])
+@login_required
 def order_made():
     '''
     called when any order has been made
     '''
-    # print(request.json)
-    # try:
-    #     PIDs = request.form.getlist('PIDs')
-    #     Quantities = [int(n) for n in request.form.getlist('Quantities')]
-    # except:
-    #     flash("Please check: order content must be valid")
-    #     return redirect(url_for('nav'))
-
-    # if sum(Quantities) <= 0:
-    #     flash("Failed to create order: please select at least on product")
-    #     return redirect(url_for('nav'))
 
     json_data = request.json
-    print(json_data['S_owner'])
+    '''
+    request.json format:
+    {
+        "PIDs": List[int],
+        "Quantities": List[int],
+        "S_owner": int,
+        "Type": int,
+    }
+    '''
+    print(json_data)
+    print(json_data.keys())
 
+    # TODO: Update code to work with new format
     # get user data
     UID = session['user_info']['UID']
     db = get_db()
@@ -253,13 +254,15 @@ def order_made():
     print("update successful")
     db.commit()
     # update session
-    session['user_info']['U_balance'] -= json_data['Subtotal']+json_data['Delivery_fee']
+    session['user_info']['U_balance'] -= json_data['Subtotal'] + \
+        json_data['Delivery_fee']
     return jsonify({
         'message': 'Order made successfully'
     }), 200
 
 
 @app.route("/order_preview", methods=['POST'])
+@login_required
 def order_preview():
     '''
     called before any order has been made
