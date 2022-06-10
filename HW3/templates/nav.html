@@ -746,7 +746,7 @@
           <option>Canceled</option>
         </select>
         <div class="row">
-          <div class="col-xs-8">
+          <div class="col-xs-8" id="MyOrder-table">
             <table class="table" style="margin-top: 15px;">
               <thead>
                 <tr>
@@ -792,7 +792,10 @@
                 <!-- for loop1 should end here -->
               </tbody>
             </table>
-            <!-- for loop2 should start here -->
+            <div>
+              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteMyOrder()"> batch delete</button>
+            </div>
+              <!-- for loop2 should start here -->
             <!-- Modal: MyOrderDetail-{id} -->
             <div class="modal fade" id="MyOrderDetail-1" data-backdrop="static" tabindex="-1" role="dialog"
               aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -911,6 +914,25 @@
               }
             })
           }
+          function batchDeleteMyOrder(){
+            $('#MyOrder-table').find('input:checked').each(function(){
+              OID = parseInt($(this).attr('name'))
+              $.ajax({
+                url: 'http://' + window.location.host + '/order-delete',
+                type: 'POST',
+                data: { 'OID': OID },
+                dataType: 'json',
+                success: function (result) {
+                  console.log(result.msg);
+                },
+                error: function (jqxhr, textStatus, errorThrown) {
+                  alert(jqxhr.responseText)
+                }
+              })
+            });
+            alert('batch deleted successfully');
+            searchMyOrders()
+          }
           MyOrders = []
           function updateMyOrderTable() {
             var table = '', filter = document.getElementById("order-status").value;
@@ -973,7 +995,7 @@
           <option>Canceled</option>
         </select>
         <div class="row">
-          <div class="col-xs-8">
+          <div class="col-xs-8" id="ShopOrder-table">
             <table class="table" style="margin-top: 15px;">
               <thead>
                 <tr>
@@ -1021,6 +1043,10 @@
                 <!-- for loop1 should end here -->
               </tbody>
             </table>
+            <div>
+              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteShopOrder()"> batch delete</button>
+              <button type="button" name="empty" class="btn btn-success " onclick="batchCompleteShopOrder()"> batch complete</button>
+            </div>
             <!-- for loop2 should start here -->
             <!-- Modal: ShopOrderDetail-{id} -->
             <div class="modal fade" id="ShopOrderDetail-1" data-backdrop="static" tabindex="-1" role="dialog"
@@ -1142,6 +1168,45 @@
                 alert(jqxhr.responseText)
               }
             })
+          }
+          function batchCompleteShopOrder(){
+            $('#ShopOrder-table').find('input:checked').each(function(){
+              OID = parseInt($(this).attr('name'))
+              console.log(OID)
+              $.ajax({
+                url: 'http://' + window.location.host + '/order-complete',
+                type: 'POST',
+                data: { 'OID': OID },
+                dataType: 'json',
+                success: function (result) {
+                  console.log(result.msg);
+                },
+                error: function (jqxhr, textStatus, errorThrown) {
+                  alert(jqxhr.responseText)
+                }
+              })
+            });
+            alert('batch completed successfully');
+            searchShopOrders()
+          }
+          function batchDeleteShopOrder(){
+            $('#ShopOrder-table').find('input:checked').each(function(){
+              OID = parseInt($(this).attr('name'))
+              $.ajax({
+                url: 'http://' + window.location.host + '/order-delete',
+                type: 'POST',
+                data: { 'OID': OID },
+                dataType: 'json',
+                success: function (result) {
+                  console.log(result.msg);
+                },
+                error: function (jqxhr, textStatus, errorThrown) {
+                  alert(jqxhr.responseText)
+                }
+              })
+            });
+            alert('batch deleted successfully');
+            searchShopOrders()
           }
           ShopOrders = [];
           function updateShopOrderTable() {
