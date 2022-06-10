@@ -9,7 +9,6 @@ from flask import (
     session, flash, redirect, url_for,
     json, jsonify,
 )
-import datetime
 
 sqlite3.enable_callback_tracebacks(True)
 
@@ -169,7 +168,7 @@ def order_made():
         if rst is None:
             return jsonify({
                 'message': 'Failed to create order: one or more products does not exist'
-            }), 200            
+            }), 200
         # product exists, check if product is sufficient
         elif Quantity > rst['P_quantity']:
             non_sufficient_product_name.append(rst['P_name'])
@@ -248,7 +247,7 @@ def order_made():
             ''', (Quantity, PID))
 
         # update O_Contains_P
-        for PID, Quantity in zip(json_data['PIDs'],json_data['Quantities']):
+        for PID, Quantity in zip(json_data['PIDs'], json_data['Quantities']):
             db.cursor().execute('''
                 insert into O_Contains_P (OID, PID, Quantity)
                 values (?, ?, ?)
@@ -1156,7 +1155,7 @@ def top_up():
 
 def main():
     init_db()
-    app.run('0.0.0.0', debug=True)
+    app.run('0.0.0.0', debug=True, threaded=False)
 
 
 if __name__ == '__main__':
