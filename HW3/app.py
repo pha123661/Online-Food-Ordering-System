@@ -699,6 +699,30 @@ def search_transactionRecord():
     return response
 
 
+@app.route("/order-delete", methods=['POST'])
+def order_delete():
+    OID = int(request.form['OID'])
+    # delete order
+    
+    
+    response = jsonify({'msg': 'deleted order successfully'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
+
+
+@app.route("/order-complete", methods=['POST'])
+def order_complete():
+    OID = int(request.form['OID'])
+    # delete order
+    
+    
+    response = jsonify({'msg': 'completed order successfully'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.status_code = 200
+    return response
+
+
 @app.route("/nav.html")
 @login_required
 def nav():
