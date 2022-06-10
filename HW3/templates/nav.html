@@ -419,6 +419,7 @@
                         },
                         error: function (jqxhr, textStatus, errorThrown) {
                           alert(jqxhr.responseText)
+                          location.reload(true);
                         }
                       })
                     });
@@ -490,7 +491,8 @@
                           location.reload(true);
                         },
                         error: function (jqxhr, textStatus, errorThrown) {
-                          alert(JSON.parse(jqxhr.responseText).message)
+                          alert(jqxhr.responseText)
+                          location.reload(true);
                         }
                       })
                     });
@@ -867,7 +869,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: {'OID': OID },
+              data: { 'OID': OID },
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -1069,7 +1071,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-complete',
               type: 'POST',
-              data: {'OID': OID },
+              data: { 'OID': OID },
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -1088,7 +1090,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: {'OID': OID },
+              data: { 'OID': OID },
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
