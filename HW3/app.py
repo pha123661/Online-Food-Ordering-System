@@ -230,8 +230,8 @@ def order_made():
             'Delivery_fee': Delivery_fee,
         })
         rst = db.cursor().execute('''
-            insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, O_details, SID)
-            values (?, datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?)
+            insert into Orders (O_status, O_end_time, O_distance, O_amount, O_type, O_details, SID)
+            values (?, ?, ?, ?, ?, ?, ?)
         ''', (0, None, distance, Total, json_data['Type'], details_str, SID))
 
         # update Process_Order
@@ -244,13 +244,13 @@ def order_made():
         # update Transaction_Record
         # user -> shop
         db.cursor().execute('''
-            insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
-            values (?, ?, datetime('now', 'localtime'), ?, ?)
+            insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
+            values (?, ?, ?, ?)
         ''', (0, -Total, UID, shop_owner_UID))
         # shop <- user
         db.cursor().execute('''
-            insert into Transaction_Record (T_action, T_amount, T_time, T_Subject, T_Object)
-            values (?, ?, datetime('now', 'localtime'), ?, ?)
+            insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
+            values (?, ?, ?, ?)
         ''', (1, Total, shop_owner_UID, UID))
 
         # update Products
@@ -1037,9 +1037,9 @@ def top_up():
 
     # update Transaction_Record
     db.cursor().execute("""
-        insert into Transaction_Record
-        values (null, 2, ?, datetime('now', 'localtime'), ?, ?)
-    """, (value, UID, UID))
+        insert into Transaction_Record(T_action, T_amount, T_Subject, T_Object)
+        values (?, ?, ?, ?)
+    """, (2, value, UID, UID))
 
     db.commit()
 

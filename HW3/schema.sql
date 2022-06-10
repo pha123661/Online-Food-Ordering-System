@@ -32,7 +32,7 @@ CREATE TABLE
         OID INTEGER PRIMARY KEY AUTOINCREMENT,
         O_status INT NOT NULL,
         -- 0: not done, 1: done, -1:canceled
-        O_start_time datetime NOT NULL,
+        O_start_time datetime DEFAULT (datetime('now', 'localtime')) NOT NULL,
         -- insert current time using datetime('now', 'localtime')
         -- format: 'yyyy-mm-dd hh:mi:ss'
         O_end_time datetime,
@@ -68,7 +68,7 @@ CREATE TABLE
         -- actually its a redundant column
         T_amount INT NOT NULL,
         -- amount could be negative if action == 0
-        T_time datetime NOT NULL,
+        T_time datetime DEFAULT (datetime('now', 'localtime')) NOT NULL,
         T_Subject INT,
         T_Object INT,
         FOREIGN key (T_Subject) REFERENCES Users(UID),
