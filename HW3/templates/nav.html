@@ -1172,7 +1172,6 @@
           function batchCompleteShopOrder(){
             $('#ShopOrder-table').find('input:checked').each(function(){
               OID = parseInt($(this).attr('name'))
-              console.log(OID)
               $.ajax({
                 url: 'http://' + window.location.host + '/order-complete',
                 type: 'POST',
