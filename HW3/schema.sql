@@ -41,6 +41,8 @@ CREATE TABLE
         -- total amount (could be removed)
         O_type INT NOT NULL,
         -- 0: take-out, 1: delivery
+        O_details BLOB NOT NULL,
+        -- stores current order details (in case of updating product properties)
         SID INT NOT NULL,
         FOREIGN key (SID) REFERENCES Stores(SID),
         -- constraints --
@@ -88,16 +90,4 @@ CREATE TABLE
         FOREIGN key (P_store) REFERENCES Stores(SID),
         -- constraints --
         CONSTRAINT P_quantity_non_negative CHECK (P_quantity >= 0)
-    );
-
-CREATE TABLE
-    if NOT EXISTS O_Contains_P(
-        OID INT NOT NULL,
-        PID INT NOT NULL,
-        Quantity INT unsigned NOT NULL,
-        PRIMARY key (OID, PID),
-        FOREIGN key (OID) REFERENCES Orders(OID),
-        FOREIGN key (PID) REFERENCES Products(PID) ON DELETE CASCADE,
-        -- constraints --
-        CONSTRAINT Quantity_gt_zero CHECK (Quantity > 0)
     );

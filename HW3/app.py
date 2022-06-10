@@ -158,6 +158,7 @@ def order_made():
 
     # check all ordered products one by one
     Subtotal = 0
+    Products = []
     non_sufficient_product_name = []
     for PID, Quantity in zip(json_data['PIDs'], json_data['Quantities']):
         db = get_db()
@@ -176,6 +177,13 @@ def order_made():
             non_sufficient_product_name.append(rst['P_name'])
         # calculate subtotal
         Subtotal += rst['P_price'] * Quantity
+
+        rst = dict(rst)
+        rst['P_image'] = base64.b64encode(rst['P_image']).decode()
+        rst['Order_quantity'] = Quantity
+        del rst['P_quantity']  # useless
+        Products.append(rst)
+
     # check if product quantity sufficient
     if len(non_sufficient_product_name) > 0:
         return jsonify({
@@ -216,10 +224,15 @@ def order_made():
         ''', (Total, shop_owner_UID))
 
         # update Orders
+        details_str = json.dumps({
+            'Products': Products,
+            'Subtotal': Subtotal,
+            'Delivery_fee': Delivery_fee,
+        })
         rst = db.cursor().execute('''
-            insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, SID)
-            values (?, datetime('now'), ?, ?, ?, ?, ?)
-        ''', (0, None, distance, Total, json_data['Type'], SID))
+            insert into Orders (O_status, O_start_time, O_end_time, O_distance, O_amount, O_type, O_details, SID)
+            values (?, datetime('now'), ?, ?, ?, ?, ?, ?)
+        ''', (0, None, distance, Total, json_data['Type'], details_str, SID))
 
         # update Process_Order
         OID = rst.lastrowid
@@ -247,53 +260,14 @@ def order_made():
                 set P_quantity = P_quantity - ?
                 where PID = ?
             ''', (Quantity, PID))
-    except:
+    except Exception as e:
+        print(type(Exception), str(e))
         db.rollback()
         return jsonify({
             'message': 'Failed to create order: please try again'
         }), 200
 
     db.commit()
-    print("update successful")
-
-    # Create Order Details object
-    # query product infos
-    db.cursor().execute("DROP TABLE IF EXISTS PID_list")
-    db.cursor().execute("""
-        create temp table PID_list(PID INTEGER PRIMARY KEY)
-    """)
-    for P in json_data['PIDs']:
-        db.cursor().execute("""
-        insert into PID_list values (?)
-        """, (P, ))
-    rst = db.cursor().execute("""
-        select * from PID_list natural join Products
-    """).fetchall()
-
-    # decode image + calculate price
-    Products = [dict(r) for r in rst]
-    Subtotal = 0
-    for r, q in zip(Products, json_data['Quantities']):
-        r['P_image'] = base64.b64encode(r['P_image']).decode()
-        r['Order_quantity'] = q
-        del r['P_quantity']  # useless
-        Subtotal += r['P_price'] * q
-
-    # calculate fee
-    Delivery_fee = 0 if json_data['Type'] == 0 else max(
-        int(round(distance * 10)), 10)
-
-    details = {
-        'Products': Products,
-        'Subtotal': Subtotal,
-        'Delivery_fee': Delivery_fee,
-    }
-
-    with open(os.path.join(ORDER_DETAIL_PATH, f'{OID}.json'), mode='w') as fp:
-        json.dump(details, fp, indent=4)
-        print('order details saved to disk')
-
-    db.cursor().execute("drop table PID_list")
 
     return jsonify({
         'message': 'Order made successfully'
@@ -594,14 +568,10 @@ def search_shops():
 @app.route("/order-detail", methods=['POST'])
 def order_detail():
     OID = request.form['OID']
-    if not os.file.exists(os.path.join(ORDER_DETAIL_PATH, f"{OID}.json")):
-        jsonify({
-            'Products': [],
-            'Subtotal': 0,
-            'Delivery_fee': 0,
-        }), 200
-    with open(os.path.join(ORDER_DETAIL_PATH, f"{OID}.json"), mode='r') as fp:
-        details = json.load(fp)
+    db = get_db()
+    details_str = db.cursor().execute(
+        'select O_details from Orders where OID = ?', (OID, )).fetchone()[0]
+    details = json.loads(details_str)
     return jsonify(details), 200
 
 
