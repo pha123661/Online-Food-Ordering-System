@@ -1,5 +1,6 @@
 import os
 import math
+import json
 import base64
 import sqlite3
 import hashlib
@@ -17,6 +18,10 @@ SCHEMA = 'schema.sql'
 
 # distance boundary
 DISTANCE_BOUNDARY = {'medium': 200, 'far': 600}
+ORDER_DETAIL_PATH = './static/order_details/'
+
+if not os.path.exists(ORDER_DETAIL_PATH):
+    os.makedirs(ORDER_DETAIL_PATH)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(99)
@@ -132,10 +137,7 @@ def order_made():
         "Type": int,
     }
     '''
-    print(json_data)
-    print(json_data.keys())
 
-    # TODO: Update code to work with new format
     # get user data
     UID = session['user_info']['UID']
     db = get_db()
@@ -245,24 +247,54 @@ def order_made():
                 set P_quantity = P_quantity - ?
                 where PID = ?
             ''', (Quantity, PID))
-
-        # update O_Contains_P
-        for PID, Quantity in zip(json_data['PIDs'], json_data['Quantities']):
-            db.cursor().execute('''
-                insert into O_Contains_P (OID, PID, Quantity)
-                values (?, ?, ?)
-            ''', (OID, PID, Quantity))
-
     except:
         db.rollback()
         return jsonify({
             'message': 'Failed to create order: please try again'
         }), 200
 
-    print("update successful")
     db.commit()
-    # update session
-    session['user_info']['U_balance'] -= Total
+    print("update successful")
+
+    # Create Order Details object
+    # query product infos
+    db.cursor().execute("DROP TABLE IF EXISTS PID_list")
+    db.cursor().execute("""
+        create temp table PID_list(PID INTEGER PRIMARY KEY)
+    """)
+    for P in json_data['PIDs']:
+        db.cursor().execute("""
+        insert into PID_list values (?)
+        """, (P, ))
+    rst = db.cursor().execute("""
+        select * from PID_list natural join Products
+    """).fetchall()
+
+    # decode image + calculate price
+    Products = [dict(r) for r in rst]
+    Subtotal = 0
+    for r, q in zip(Products, json_data['Quantities']):
+        r['P_image'] = base64.b64encode(r['P_image']).decode()
+        r['Order_quantity'] = q
+        del r['P_quantity']  # useless
+        Subtotal += r['P_price'] * q
+
+    # calculate fee
+    Delivery_fee = 0 if json_data['Type'] == 0 else max(
+        int(round(distance * 10)), 10)
+
+    details = {
+        'Products': Products,
+        'Subtotal': Subtotal,
+        'Delivery_fee': Delivery_fee,
+    }
+
+    with open(os.path.join(ORDER_DETAIL_PATH, f'{OID}.json'), mode='w') as fp:
+        json.dump(details, fp, indent=4)
+        print('order details saved to disk')
+
+    db.cursor().execute("drop table PID_list")
+
     return jsonify({
         'message': 'Order made successfully'
     }), 200
@@ -292,6 +324,7 @@ def order_preview():
 
     # query product infos
     db = get_db()
+    db.cursor().execute("DROP TABLE IF EXISTS PID_list")
     db.cursor().execute("""
         create temp table PID_list(PID INTEGER PRIMARY KEY)
     """)
@@ -324,8 +357,7 @@ def order_preview():
     Delivery_fee = 0 if request.form['Dilivery'] == '0' else max(
         int(round(distance * 10)), 10)
 
-    # drop temp table
-    db.rollback()
+    db.cursor().execute("drop table PID_list")
 
     return jsonify({
         'Products': Products,
@@ -561,124 +593,16 @@ def search_shops():
 
 @app.route("/order-detail", methods=['POST'])
 def order_detail():
-    db = get_db()
-    try:
-        PIDs = []
-        Quantities = []
-        OID = request.form['OID']
-        O_type, distance = db.cursor().execute(
-            '''
-            select O_type, O_distance
-            from Orders
-            where OID = ?
-            ''', (OID,)
-        ).fetchone()
-
-        rst = db.cursor().execute(
-            '''
-            select PID, Quantity
-            from O_Contains_P
-            where OID = ?
-            ''',
-            (OID,)
-        ).fetchall()
-
-        for PID, quantity in rst:
-            PIDs.append(PID)
-            Quantities.append(quantity)
-
-        if len(Quantities) == 0:
-            return jsonify('Failed to create order: please select at least on product'), 500
-    except ValueError:
-        return jsonify('Please check: order content must be valid'), 500
-
-    # query product infos
-    db.cursor().execute("""
-        create temp table PID_list(PID INTEGER PRIMARY KEY)
-    """)
-    for P in PIDs:
-        db.cursor().execute("""
-        insert into PID_list values (?)
-        """, (P, ))
-
-    rst = db.cursor().execute("""
-    select * from PID_list natural join Products
-    """).fetchall()
-
-    # decode image + calculate price
-    if len(rst) != len(Quantities):
-        return jsonify('some of products are no longer available'), 500
-    Products = [dict(r) for r in rst]
-
-    Subtotal = 0
-    for r, q in zip(Products, Quantities):
-        r['P_image'] = base64.b64encode(r['P_image']).decode()
-        r['Order_quantity'] = q
-        Subtotal += r['P_price'] * q
-
-    # calculate fee
-    Delivery_fee = 0 if O_type == 0 else max(
-        int(round(distance * 10)), 10)
-
-    # drop temp table
-    db.rollback()
-
-    return jsonify({
-        'Products': Products,
-        'Subtotal': Subtotal,
-        'Delivery_fee': Delivery_fee,
-    }), 200
-
-
-def total_price(OID, UID, O_type, distance):
-    db = get_db()
-    rst = db.cursor().execute(
-        '''
-        select PID, Quantity
-        from O_Contains_P
-        where OID = ?
-        ''',
-        (OID,)
-    ).fetchall()
-
-    PIDs = []
-    Quantities = []
-    for PID, quantity in rst:
-        PIDs.append(PID)
-        Quantities.append(quantity)
-
-    # query product infos
-    db.cursor().execute("""
-        create temp table PID_list(PID INTEGER PRIMARY KEY)
-    """)
-    for P in PIDs:
-        db.cursor().execute("""
-        insert into PID_list values (?)
-        """, (P, ))
-
-    rst = db.cursor().execute("""
-    select * from PID_list natural join Products
-    """).fetchall()
-
-    Products = [dict(r) for r in rst]
-
-    Subtotal = 0
-    for r, q in zip(Products, Quantities):
-        r['Order_quantity'] = q
-        Subtotal += r['P_price'] * q
-
-    # calculate fee
-    Delivery_fee = 0 if O_type == 0 else max(
-        int(round(distance * 10)), 10)
-
-    total_price = Subtotal + Delivery_fee
-
-    # drop temp table
-    db.cursor().execute("""
-        drop table if exists PID_list
-    """)
-
-    return total_price
+    OID = request.form['OID']
+    if not os.file.exists(os.path.join(ORDER_DETAIL_PATH, f"{OID}.json")):
+        jsonify({
+            'Products': [],
+            'Subtotal': 0,
+            'Delivery_fee': 0,
+        }), 200
+    with open(os.path.join(ORDER_DETAIL_PATH, f"{OID}.json"), mode='r') as fp:
+        details = json.load(fp)
+    return jsonify(details), 200
 
 
 @app.route("/search-MyOrders", methods=['POST'])
