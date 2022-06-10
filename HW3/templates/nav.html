@@ -860,9 +860,22 @@
               }
             });
           })
-          function deleteOrder(OID) {
+          function deleteOrder(oid) {
             // implement your order delete function
             // !!! careful, use parseInt(OID) here since OID is str
+            OID = parseInt(oid);
+            $.ajax({
+              url: 'http://' + window.location.host + '/order-delete',
+              type: 'POST',
+              data: {'OID': OID },
+              dataType: 'json',
+              success: function (result) {
+                alert(result.msg);
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert(jqxhr.responseText)
+              }
+            })
             // and refresh order table
             searchMyOrders()
           }
@@ -1049,15 +1062,41 @@
           </div>
         </div>
         <script type="text/javascript">
-          function completeShopOrder(OID) {
+          function completeShopOrder(oid) {
             // implement your order complete function
             // !!! careful, use parseInt(OID) here since OID is str
+            OID = parseInt(oid);
+            $.ajax({
+              url: 'http://' + window.location.host + '/order-complete',
+              type: 'POST',
+              data: {'OID': OID },
+              dataType: 'json',
+              success: function (result) {
+                alert(result.msg);
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert(jqxhr.responseText)
+              }
+            })
             // and refresh order table
             searchShopOrders();
           }
-          function cancelShopOrder(OID) {
+          function cancelShopOrder(oid) {
             // implement your order cancel function
             // !!! careful, use parseInt(OID) here since OID is str
+            OID = parseInt(oid);
+            $.ajax({
+              url: 'http://' + window.location.host + '/order-delete',
+              type: 'POST',
+              data: {'OID': OID },
+              dataType: 'json',
+              success: function (result) {
+                alert(result.msg);
+              },
+              error: function (jqxhr, textStatus, errorThrown) {
+                alert(jqxhr.responseText)
+              }
+            })
             // and refresh order table
             searchShopOrders();
           }
