@@ -703,8 +703,7 @@ def search_transactionRecord():
 def order_delete():
     OID = int(request.form['OID'])
     # delete order
-    
-    
+
     response = jsonify({'msg': 'deleted order successfully'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
@@ -715,8 +714,7 @@ def order_delete():
 def order_complete():
     OID = int(request.form['OID'])
     # delete order
-    
-    
+
     response = jsonify({'msg': 'completed order successfully'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
@@ -1070,6 +1068,11 @@ def top_up():
     flash('Top-up successful')
     return redirect(url_for('nav'))
 
+
+# @app.errorhandler(Exception)
+# def all_exception_handler(error):
+#     print(error)
+#     return "invalid!", 500
 
 def main():
     init_db()
