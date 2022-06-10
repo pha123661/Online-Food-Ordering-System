@@ -33,7 +33,7 @@ CREATE TABLE
         O_status INT NOT NULL,
         -- 0: not done, 1: done, -1:canceled
         O_start_time datetime NOT NULL,
-        -- insert current time using datetime('now')
+        -- insert current time using datetime('now', 'localtime')
         -- format: 'yyyy-mm-dd hh:mi:ss'
         O_end_time datetime,
         O_distance FLOAT NOT NULL,
