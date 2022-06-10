@@ -756,6 +756,7 @@
                   <th scope="col">Total Price</th>
                   <th scope="col">Order Details</th>
                   <th scope="col">Action</th>
+                  <th scope="col">Select</th>
                 </tr>
               </thead>
               <tbody id="MyOrder-update">
@@ -919,15 +920,25 @@
               table += '<td>' + order.end_time + '</td>';
               table += '<td>' + order.S_name + '</td>';
               table += '<td>' + order.total_price + '</td>';
+              if (order.Status == 'Not finished'){
+                not_fin = `
+                <td>
+                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
+                    onclick="deleteOrder(this.name)">Cancel Order</button>
+                </td>
+                <td>
+                  <input type="checkbox" class="form-check-input" name="${order.OID}">
+                </td>
+                `
+              } else {
+                not_fin = `<td></td><td></td>`
+              }
               table += `
                 <td>
                   <button type="button" name="${order.OID}" data-toggle="modal" data-target="#MyOrderDetail-1" class="btn btn-info " 
                   onclick="updateOrderDetail(this.name)"> Order Details</button>
                 </td>
-                <td>
-                  <button type="button" name="${order.OID}" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
-                    onclick="deleteOrder(this.name)">Cancel Order</button>
-                </td></tr>`;
+                ${not_fin}</tr>`;
             });
             $("#MyOrder-update").html(table);
           }
@@ -972,6 +983,7 @@
                   <th scope="col">Total Price</th>
                   <th scope="col">Order Details</th>
                   <th scope="col">Action</th>
+                  <th scope="col">Select</th>
                 </tr>
               </thead>
               <tbody id="ShopOrder-update">
@@ -1152,9 +1164,12 @@
                   onclick="completeShopOrder(this.name)"> Done</button>
                   <button type="button" name="${order.OID}" data-toggle="modal" class="btn btn-danger " 
                   onclick="cancelShopOrder(this.name)"> Cancel</button>
+                </td>
+                <td>
+                  <input type="checkbox" class="form-check-input" name="${order.OID}">
                 </td></tr>`
               } else {
-                table += '<td></td></tr>'
+                table += '<td></td><td></td></tr>'
               }
             });
             $("#ShopOrder-update").html(table);
