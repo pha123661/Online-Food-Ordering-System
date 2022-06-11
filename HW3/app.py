@@ -746,17 +746,24 @@ def order_delete():
             db.cursor().execute(
                 'update Process_Order set PO_type = 1 where OID = ?', (delete_OID, )
             )
-        # refund: add transaction record
-        # user <- shop
+        # refund: add transaction record and update user balance
+        # add transaction record: user <- shop
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
             values (?, ?, ?, ?)
         ''', (1, rst['O_amount'], customer_ID, shop_owner_ID))
-        # shop -> user
+        # add transaction record: shop -> user
         db.cursor().execute('''
             insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
             values (?, ?, ?, ?)
-        ''', (0, rst['O_amount'], shop_owner_ID, customer_ID))
+        ''', (0, -rst['O_amount'], shop_owner_ID, customer_ID))
+        # update user balance
+        db.cursor().execute('''
+            update Users set U_balance = U_balance + ? where UID = ?
+        ''', (rst['O_amount'], customer_ID))
+        db.cursor().execute('''
+            update Users set U_balance = U_balance - ? where UID = ?
+        ''', (rst['O_amount'], shop_owner_ID))
 
         # update product quantity
         # get product PIDs and Quantities
@@ -780,7 +787,8 @@ def order_delete():
                 'update Products set P_quantity = P_quantity + ? where PID = ?', (quantity, PID)
             )
 
-    except:
+    except Exception as e:
+        print("ERROR : "+str(e))
         db.rollback()
         response = jsonify({'msg': 'cancel order failed'})
         response.headers.add('Access-Control-Allow-Origin', '*')
