@@ -874,7 +874,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: { 'OID': OID },
+              data: { 'OID': OID , 'is_shopowner': false},
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -921,7 +921,7 @@
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
-                data: { 'OID': OID },
+                data: { 'OID': OID, 'is_shopowner': false},
                 dataType: 'json',
                 success: function (result) {
                   console.log(result.msg);
@@ -1131,7 +1131,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: { 'OID': OID },
+              data: { 'OID': OID, 'is_shopowner': true},
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -1197,7 +1197,7 @@
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
-                data: { 'OID': OID },
+                data: { 'OID': OID, 'is_shopowner': true},
                 dataType: 'json',
                 success: function (result) {
                   console.log(result.msg);

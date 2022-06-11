@@ -31,7 +31,7 @@ CREATE TABLE
     if NOT EXISTS Orders(
         OID INTEGER PRIMARY KEY AUTOINCREMENT,
         O_status INT NOT NULL,
-        -- 0: not done, 1: done, -1:canceled
+        -- 0: not done, 1: done, -1: canceled
         O_start_time datetime DEFAULT (datetime('now', 'localtime')) NOT NULL,
         -- insert current time using datetime('now', 'localtime')
         -- format: 'yyyy-mm-dd hh:mi:ss'
@@ -54,7 +54,7 @@ CREATE TABLE
         UID INT NOT NULL,
         OID INT NOT NULL,
         PO_type INT NOT NULL,
-        -- 0: User order, 1: User cancel, 2: Owner deliver, 3:Owner cancel
+        -- 0: User order, 1: User cancel, 2: Order completed, 3: Owner cancel
         PRIMARY key (UID, OID),
         FOREIGN key (UID) REFERENCES Users(UID),
         FOREIGN key (OID) REFERENCES Orders(OID)

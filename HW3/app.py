@@ -701,10 +701,94 @@ def search_transactionRecord():
 
 @app.route("/order-delete", methods=['POST'])
 def order_delete():
-    OID = int(request.form['OID'])
-    # delete order
+    delete_OID = int(request.form['OID'])
+    is_shopowner = request.form['is_shopowner']
+    print("delete_OID: ", delete_OID, "is_shopowner? ", is_shopowner)
+    # get user ID and shop owner ID
+    db = get_db()
+    customer_ID = db.cursor().execute(
+        'select UID from Process_Order where OID = ?', (delete_OID, )
+    ).fetchone()[0]
+    SID = db.cursor().execute(
+        'select SID from Orders where OID = ?', (delete_OID, )
+    ).fetchone()[0]
+    shop_owner_ID = db.cursor().execute(
+        'select S_owner from Stores where SID = ?', (SID, )
+    ).fetchone()[0]
+    print("customer_ID: ", customer_ID, "shop_owner_ID: ", shop_owner_ID)
 
-    response = jsonify({'msg': 'deleted order successfully'})
+    # get canceled order data from db
+    rst = db.cursor().execute("""
+        select * 
+        from Orders 
+        where OID = ?
+        """, (delete_OID, )).fetchone()
+
+    if rst is None:
+        return jsonify({'msg': 'Order not found'}), 200
+    try:
+        # check if order is finished
+        if rst['O_status'] == 0:
+            # update order status to 'calceled'
+            db.cursor().execute(
+                'update Orders set O_status = -1 where OID = ?', (delete_OID, )
+            )
+        else:
+            return jsonify({'msg': 'Order is already finished / canceled'}), 200
+        # update process order status to 'owner canceled' or 'user canceled'
+        if is_shopowner == 'true':
+            print("Shopowner cancels order")
+            db.cursor().execute(
+                'update Process_Order set PO_type = 3 where OID = ?', (delete_OID, )
+            )
+        elif is_shopowner == 'false':
+            print("User cancels order")
+            db.cursor().execute(
+                'update Process_Order set PO_type = 1 where OID = ?', (delete_OID, )
+            )
+        # refund: add transaction record
+        # user <- shop
+        db.cursor().execute('''
+            insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
+            values (?, ?, ?, ?)
+        ''', (1, rst['O_amount'], customer_ID, shop_owner_ID))
+        # shop -> user
+        db.cursor().execute('''
+            insert into Transaction_Record (T_action, T_amount, T_Subject, T_Object)
+            values (?, ?, ?, ?)
+        ''', (0, rst['O_amount'], shop_owner_ID, customer_ID))
+
+        # update product quantity
+        # get product PIDs and Quantities
+        rst = db.cursor().execute('''
+            select O_details
+            from Orders
+            where OID = ?
+        ''', (delete_OID, )).fetchone()[0]
+        product_details = json.loads(rst)['Products']     
+        # get all PIDs and Quantities
+        PIDs = []
+        Quantities = []
+        for product in product_details:
+            print(product.keys())
+            PIDs.append(product['PID'])
+            Quantities.append(product['Order_quantity'])
+
+        for PID, quantity in zip(PIDs, Quantities):
+            print(PID, quantity)
+            db.cursor().execute(
+                'update Products set P_quantity = P_quantity + ? where PID = ?', (quantity, PID)
+            )
+
+    except:
+        db.rollback()
+        response = jsonify({'msg': 'cancel order failed'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.status_code = 500
+        return response
+
+    db.commit()
+    response = jsonify({'msg': 'cancel order successfully'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
@@ -712,10 +796,55 @@ def order_delete():
 
 @app.route("/order-complete", methods=['POST'])
 def order_complete():
-    OID = int(request.form['OID'])
-    # delete order
+    complete_OID = int(request.form['OID'])
+    print("complete_OID: ", complete_OID)
 
-    response = jsonify({'msg': 'completed order successfully'})
+    # get user ID and shop owner ID
+    db = get_db()
+    customer_ID = db.cursor().execute(
+        'select UID from Process_Order where OID = ?', (complete_OID, )
+    ).fetchone()[0]
+    SID = db.cursor().execute(
+        'select SID from Orders where OID = ?', (complete_OID, )
+    ).fetchone()[0]
+    shop_owner_ID = db.cursor().execute(
+        'select S_owner from Stores where SID = ?', (SID, )
+    ).fetchone()[0]
+    print("customer_ID: ", customer_ID, "shop_owner_ID: ", shop_owner_ID)
+
+    # get completed order data from db
+    rst = db.cursor().execute("""
+        select * 
+        from Orders 
+        where OID = ?
+        """, (complete_OID, )).fetchone()
+
+    if rst is None:
+        return jsonify({'msg': 'Order not found'}), 200
+    try:
+        # check if order is finished
+        if rst['O_status'] == 0:
+            # update order status to 'completed' and set end time
+            db.cursor().execute('''
+                update Orders set O_status = 1, O_end_time = datetime('now', 'localtime') where OID = ?
+                ''', (complete_OID, ))
+        else:
+            return jsonify({'msg': 'Order is already finished / canceled'}), 200
+
+        # update process order status to 'order completed'
+        db.cursor().execute(
+            'update Process_Order set PO_type = 2 where OID = ?', (complete_OID, )
+        )
+
+    except:
+        db.rollback()
+        response = jsonify({'msg': 'complete order failed'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.status_code = 500
+        return response
+
+    db.commit()
+    response = jsonify({'msg': 'complete order successfully'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
@@ -981,7 +1110,6 @@ def shop_add():
 
 @app.route("/edit_price_and_quantity", methods=['POST'])
 def edit_price_and_quantity():
-    # print("inside edit_price_and_quantity")
     edit_price = request.form['edit_price']
     edit_quantity = request.form['edit_quantity']
     edit_PID = request.form['edit_PID']
@@ -1012,7 +1140,6 @@ def edit_price_and_quantity():
         set P_price = ?, P_quantity = ?
         where PID = ?
     """, (edit_price, edit_quantity, edit_PID))
-    # print("edit_PID: ", edit_PID)
     db.commit()
 
     flash("Edit Successful")
@@ -1021,7 +1148,6 @@ def edit_price_and_quantity():
 
 @app.route("/delete_product", methods=['POST'])
 def delete_product():
-    # print("In delete_product")
     delete_PID = request.form['delete_PID']
 
     # delete product from Products db
@@ -1030,7 +1156,6 @@ def delete_product():
         delete from Products
         where PID = ?
     """, (delete_PID,))
-    # print("delete_PID: ", delete_PID)
     db.commit()
 
     flash("Delete Successful")
