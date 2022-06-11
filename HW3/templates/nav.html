@@ -793,9 +793,10 @@
               </tbody>
             </table>
             <div>
-              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteMyOrder()"> batch delete</button>
+              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteMyOrder()">Cancel Seleted
+                Orders</button>
             </div>
-              <!-- for loop2 should start here -->
+            <!-- for loop2 should start here -->
             <!-- Modal: MyOrderDetail-{id} -->
             <div class="modal fade" id="MyOrderDetail-1" data-backdrop="static" tabindex="-1" role="dialog"
               aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -914,8 +915,8 @@
               }
             })
           }
-          function batchDeleteMyOrder(){
-            $('#MyOrder-table').find('input:checked').each(function(){
+          function batchDeleteMyOrder() {
+            $('#MyOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
@@ -930,7 +931,7 @@
                 }
               })
             });
-            alert('batch deleted successfully');
+            alert('Seleted orders canceled successfully');
             searchMyOrders()
           }
           MyOrders = []
@@ -944,7 +945,7 @@
               table += '<td>' + order.end_time + '</td>';
               table += '<td>' + order.S_name + '</td>';
               table += '<td>' + order.total_price + '</td>';
-              if (order.Status == 'Not finished'){
+              if (order.Status == 'Not finished') {
                 not_fin = `
                 <td>
                   <button type="button" name="${order.OID}" data-toggle="modal" data-target="test" name="test" class="btn btn-danger "
@@ -1044,8 +1045,10 @@
               </tbody>
             </table>
             <div>
-              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteShopOrder()"> batch delete</button>
-              <button type="button" name="empty" class="btn btn-success " onclick="batchCompleteShopOrder()"> batch complete</button>
+              <button type="button" name="empty" class="btn btn-danger " onclick="batchDeleteShopOrder()">Cancel Seleted
+                Orders</button>
+              <button type="button" name="empty" class="btn btn-success " onclick="batchCompleteShopOrder()">Complete
+                Seleted Orders</button>
             </div>
             <!-- for loop2 should start here -->
             <!-- Modal: ShopOrderDetail-{id} -->
@@ -1169,8 +1172,8 @@
               }
             })
           }
-          function batchCompleteShopOrder(){
-            $('#ShopOrder-table').find('input:checked').each(function(){
+          function batchCompleteShopOrder() {
+            $('#ShopOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-complete',
@@ -1185,11 +1188,11 @@
                 }
               })
             });
-            alert('batch completed successfully');
+            alert('Seleted orders completed successfully');
             searchShopOrders()
           }
-          function batchDeleteShopOrder(){
-            $('#ShopOrder-table').find('input:checked').each(function(){
+          function batchDeleteShopOrder() {
+            $('#ShopOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
@@ -1204,7 +1207,7 @@
                 }
               })
             });
-            alert('batch deleted successfully');
+            alert('Seleted orders canceled successfully');
             searchShopOrders()
           }
           ShopOrders = [];
