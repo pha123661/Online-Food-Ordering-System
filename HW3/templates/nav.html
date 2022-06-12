@@ -917,11 +917,14 @@
           }
           function batchDeleteMyOrder() {
             all_succ = true;
+            has_select = false;
             $('#MyOrder-table').find('input:checked').each(function () {
+              has_select = true;
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
+                async: false,
                 data: { 'OID': OID, 'is_shopowner': false },
                 dataType: 'json',
                 success: function (result) {
@@ -934,7 +937,7 @@
               })
             });
             console.log(all_succ);
-            if (all_succ) {
+            if (all_succ && has_select) {
               alert('Seleted orders canceled successfully');
             }
             searchMyOrders()
@@ -1179,11 +1182,14 @@
           }
           function batchCompleteShopOrder() {
             all_succ = true;
+            has_select = false;
             $('#ShopOrder-table').find('input:checked').each(function () {
+              has_select = true;
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-complete',
                 type: 'POST',
+                async: false,
                 data: { 'OID': OID },
                 dataType: 'json',
                 success: function (result) {
@@ -1195,18 +1201,21 @@
                 }
               })
             });
-            if (all_succ) {
+            if (all_succ && has_select) {
               alert('Seleted orders completed successfully');
             }
             searchShopOrders()
           }
           function batchDeleteShopOrder() {
             all_succ = true;
+            has_select = false;
             $('#ShopOrder-table').find('input:checked').each(function () {
+              has_select = true;
               OID = parseInt($(this).attr('name'))
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
+                async: false,
                 data: { 'OID': OID, 'is_shopowner': true },
                 dataType: 'json',
                 success: function (result) {
@@ -1218,7 +1227,7 @@
                 }
               })
             });
-            if (all_succ) {
+            if (all_succ && has_select) {
               alert('Seleted orders canceled successfully');
             }
             searchShopOrders()
