@@ -735,7 +735,7 @@ def order_delete():
                 'update Orders set O_status = -1 where OID = ?', (delete_OID, )
             )
         else:
-            return jsonify({'msg': 'Order is already finished / canceled'}), 200
+            return jsonify('Order is already finished / canceled'), 500
         # update process order status to 'owner canceled' or 'user canceled'
         if is_shopowner == 'true':
             print("Shopowner cancels order")
@@ -769,7 +769,6 @@ def order_delete():
         ''', (rst['O_amount'], shop_owner_ID))
 
         # update product quantity
-        # get product PIDs and Quantities
         rst = db.cursor().execute('''
             select O_details
             from Orders
@@ -784,6 +783,7 @@ def order_delete():
             PIDs.append(product['PID'])
             Quantities.append(product['Order_quantity'])
 
+        # add quantity back to product, Note: if PID doesn't exist, this function does nothing(no error)
         for PID, quantity in zip(PIDs, Quantities):
             print(PID, quantity)
             db.cursor().execute(
