@@ -792,7 +792,7 @@ def order_delete():
             )
 
     except Exception as e:
-        print("ERROR : "+str(e))
+        print("ERROR : " + str(e))
         db.rollback()
         response = jsonify({'msg': 'cancel order failed'})
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -878,7 +878,6 @@ def nav():
     session['user_info'] = dict(user_info)
 
     # fetch shop_info
-    db = get_db()
     shop_info = db.cursor().execute(
         """ select *
             from Stores
@@ -886,47 +885,15 @@ def nav():
     ).fetchone()
 
     # fetch product_info
-    db = get_db()
     product_info = db.cursor().execute(
         """ select *
             from Products
             where P_owner = ?""", (UID,)
     ).fetchall()
 
-    image_info = [tple[4].decode("utf-8") for tple in product_info]
+    image_info = [tple['P_image'].decode("utf-8") for tple in product_info]
 
-    # fetch my_order_info
-    db = get_db()
-    my_order_info = db.cursor().execute(
-        """ select *
-            from Process_Order
-            where UID = ?""", (UID,)
-    ).fetchall()
-
-    # fetch SID
-    if shop_info is not None:
-        SID = shop_info['SID']
-    else:
-        SID = None
-
-    # fetch shop_order_info
-    db = get_db()
-    shop_order_info = db.cursor().execute(
-        """ select *
-            from Orders
-            where SID = ?""", (SID,)
-    ).fetchall()
-
-    # fetch transaction_info
-    db = get_db()
-    transaction_info = db.cursor().execute(
-        """ select *
-            from Transaction_Record
-            where T_Subject = ?""", (UID,)
-    ).fetchall()
-
-    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info,
-                           my_order_info=my_order_info, shop_order_info=shop_order_info, transaction_info=transaction_info)
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
 
 
 @app.route("/edit_location", methods=['POST'])
