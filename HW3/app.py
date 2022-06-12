@@ -1143,6 +1143,7 @@ def delete_product():
 
 
 @app.route('/top_up', methods=['POST'])
+@login_required
 def top_up():
     UID = session['user_info']['UID']
     try:
