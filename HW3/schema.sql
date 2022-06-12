@@ -68,6 +68,8 @@ CREATE TABLE
         -- actually its a redundant column
         T_amount INT NOT NULL,
         -- amount could be negative if action == 0
+        is_refund INT DEFAULT 0 NOT NULL,
+        -- 0: not refund, 1: refund
         T_time datetime DEFAULT (datetime('now', 'localtime')) NOT NULL,
         T_Subject INT,
         T_Object INT,
