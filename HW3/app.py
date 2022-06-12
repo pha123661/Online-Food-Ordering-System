@@ -261,7 +261,7 @@ def order_made():
                 where PID = ?
             ''', (Quantity, PID))
     except Exception as e:
-        print(type(Exception), str(e))
+        print(type(e), str(e))
         db.rollback()
         return jsonify({
             'message': 'Failed to create order: please try again'
@@ -312,7 +312,8 @@ def order_preview():
     """).fetchall()
 
     # decode image + calculate price
-    assert len(rst) == len(Quantities)
+    if len(rst) != len(Quantities):
+        return "Product modified by store, please try again!", 500
     Products = [dict(r) for r in rst]
 
     Subtotal = 0
@@ -739,12 +740,14 @@ def order_delete():
         if is_shopowner == 'true':
             print("Shopowner cancels order")
             db.cursor().execute(
-                'update Process_Order set PO_type = 3 where OID = ?', (delete_OID, )
+                'update Process_Order set PO_type = 3 where OID = ?', (
+                    delete_OID, )
             )
         elif is_shopowner == 'false':
             print("User cancels order")
             db.cursor().execute(
-                'update Process_Order set PO_type = 1 where OID = ?', (delete_OID, )
+                'update Process_Order set PO_type = 1 where OID = ?', (
+                    delete_OID, )
             )
         # refund: add transaction record and update user balance
         # add transaction record: user <- shop
@@ -772,7 +775,7 @@ def order_delete():
             from Orders
             where OID = ?
         ''', (delete_OID, )).fetchone()[0]
-        product_details = json.loads(rst)['Products']     
+        product_details = json.loads(rst)['Products']
         # get all PIDs and Quantities
         PIDs = []
         Quantities = []
@@ -784,11 +787,12 @@ def order_delete():
         for PID, quantity in zip(PIDs, Quantities):
             print(PID, quantity)
             db.cursor().execute(
-                'update Products set P_quantity = P_quantity + ? where PID = ?', (quantity, PID)
+                'update Products set P_quantity = P_quantity + ? where PID = ?', (
+                    quantity, PID)
             )
 
     except Exception as e:
-        print("ERROR : "+str(e))
+        print("ERROR : " + str(e))
         db.rollback()
         response = jsonify({'msg': 'cancel order failed'})
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -841,7 +845,8 @@ def order_complete():
 
         # update process order status to 'order completed'
         db.cursor().execute(
-            'update Process_Order set PO_type = 2 where OID = ?', (complete_OID, )
+            'update Process_Order set PO_type = 2 where OID = ?', (
+                complete_OID, )
         )
 
     except:
@@ -873,7 +878,6 @@ def nav():
     session['user_info'] = dict(user_info)
 
     # fetch shop_info
-    db = get_db()
     shop_info = db.cursor().execute(
         """ select *
             from Stores
@@ -881,47 +885,15 @@ def nav():
     ).fetchone()
 
     # fetch product_info
-    db = get_db()
     product_info = db.cursor().execute(
         """ select *
             from Products
             where P_owner = ?""", (UID,)
     ).fetchall()
 
-    image_info = [tple[4].decode("utf-8") for tple in product_info]
+    image_info = [tple['P_image'].decode("utf-8") for tple in product_info]
 
-    # fetch my_order_info
-    db = get_db()
-    my_order_info = db.cursor().execute(
-        """ select *
-            from Process_Order
-            where UID = ?""", (UID,)
-    ).fetchall()
-
-    # fetch SID
-    if shop_info is not None:
-        SID = shop_info['SID']
-    else:
-        SID = None
-
-    # fetch shop_order_info
-    db = get_db()
-    shop_order_info = db.cursor().execute(
-        """ select *
-            from Orders
-            where SID = ?""", (SID,)
-    ).fetchall()
-
-    # fetch transaction_info
-    db = get_db()
-    transaction_info = db.cursor().execute(
-        """ select *
-            from Transaction_Record
-            where T_Subject = ?""", (UID,)
-    ).fetchall()
-
-    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info,
-                           my_order_info=my_order_info, shop_order_info=shop_order_info, transaction_info=transaction_info)
+    return render_template("nav.html", user_info=user_info, shop_info=shop_info, product_info=product_info, image_info=image_info)
 
 
 @app.route("/edit_location", methods=['POST'])
@@ -1171,6 +1143,7 @@ def delete_product():
 
 
 @app.route('/top_up', methods=['POST'])
+@login_required
 def top_up():
     UID = session['user_info']['UID']
     try:
