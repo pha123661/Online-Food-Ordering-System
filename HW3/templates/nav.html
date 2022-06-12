@@ -916,6 +916,7 @@
             })
           }
           function batchDeleteMyOrder() {
+            all_succ = true;
             $('#MyOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
@@ -926,12 +927,15 @@
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert(jqxhr.responseText)
+                error: function (result) {
+                  all_succ = false
+                  alert(result.msg)
                 }
               })
             });
-            alert('Seleted orders canceled successfully');
+            if (all_succ){
+              alert('Seleted orders canceled successfully');
+            }
             searchMyOrders()
           }
           MyOrders = []
@@ -1173,6 +1177,7 @@
             })
           }
           function batchCompleteShopOrder() {
+            all_succ = true;
             $('#ShopOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
@@ -1183,15 +1188,19 @@
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert(jqxhr.responseText)
+                error: function (result) {
+                  all_succ = false
+                  alert(result.msg)
                 }
               })
             });
-            alert('Seleted orders completed successfully');
+            if (all_succ) {
+              alert('Seleted orders completed successfully');
+            }
             searchShopOrders()
           }
           function batchDeleteShopOrder() {
+            all_succ = true;
             $('#ShopOrder-table').find('input:checked').each(function () {
               OID = parseInt($(this).attr('name'))
               $.ajax({
@@ -1202,12 +1211,15 @@
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (jqxhr, textStatus, errorThrown) {
-                  alert(jqxhr.responseText)
+                error: function (result) {
+                  all_succ = false;
+                  alert(result.msg)
                 }
               })
             });
-            alert('Seleted orders canceled successfully');
+            if (all_succ){
+              alert('Seleted orders canceled successfully');
+            }
             searchShopOrders()
           }
           ShopOrders = [];
