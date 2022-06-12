@@ -874,7 +874,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: { 'OID': OID , 'is_shopowner': false},
+              data: { 'OID': OID, 'is_shopowner': false },
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -922,18 +922,19 @@
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
-                data: { 'OID': OID, 'is_shopowner': false},
+                data: { 'OID': OID, 'is_shopowner': false },
                 dataType: 'json',
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (result) {
-                  all_succ = false
-                  alert(result.msg)
+                error: function (jqxhr, textStatus, errorThrown) {
+                  all_succ = false;
+                  alert(jqxhr.responseText);
                 }
               })
             });
-            if (all_succ){
+            console.log(all_succ);
+            if (all_succ) {
               alert('Seleted orders canceled successfully');
             }
             searchMyOrders()
@@ -1135,7 +1136,7 @@
             $.ajax({
               url: 'http://' + window.location.host + '/order-delete',
               type: 'POST',
-              data: { 'OID': OID, 'is_shopowner': true},
+              data: { 'OID': OID, 'is_shopowner': true },
               dataType: 'json',
               success: function (result) {
                 alert(result.msg);
@@ -1188,9 +1189,9 @@
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (result) {
-                  all_succ = false
-                  alert(result.msg)
+                error: function (jqxhr, textStatus, errorThrown) {
+                  all_succ = false;
+                  alert(jqxhr.responseText);
                 }
               })
             });
@@ -1206,18 +1207,18 @@
               $.ajax({
                 url: 'http://' + window.location.host + '/order-delete',
                 type: 'POST',
-                data: { 'OID': OID, 'is_shopowner': true},
+                data: { 'OID': OID, 'is_shopowner': true },
                 dataType: 'json',
                 success: function (result) {
                   console.log(result.msg);
                 },
-                error: function (result) {
+                error: function (jqxhr, textStatus, errorThrown) {
                   all_succ = false;
-                  alert(result.msg)
+                  alert(jqxhr.responseText);
                 }
               })
             });
-            if (all_succ){
+            if (all_succ) {
               alert('Seleted orders canceled successfully');
             }
             searchShopOrders()

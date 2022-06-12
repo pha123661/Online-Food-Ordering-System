@@ -726,7 +726,7 @@ def order_delete():
         """, (delete_OID, )).fetchone()
 
     if rst is None:
-        return jsonify({'msg': 'Order not found'}), 200
+        return jsonify('Order not found'), 500
     try:
         # check if order is finished
         if rst['O_status'] == 0:
@@ -794,7 +794,7 @@ def order_delete():
     except Exception as e:
         print("ERROR : " + str(e))
         db.rollback()
-        response = jsonify({'msg': 'cancel order failed'})
+        response = jsonify('cancel order failed')
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.status_code = 500
         return response
@@ -832,7 +832,7 @@ def order_complete():
         """, (complete_OID, )).fetchone()
 
     if rst is None:
-        return jsonify({'msg': 'Order not found'}), 200
+        return jsonify('Order not found'), 500
     try:
         # check if order is finished
         if rst['O_status'] == 0:
@@ -841,7 +841,7 @@ def order_complete():
                 update Orders set O_status = 1, O_end_time = datetime('now', 'localtime') where OID = ?
                 ''', (complete_OID, ))
         else:
-            return jsonify({'msg': 'Order is already finished / canceled'}), 200
+            return jsonify('Order is already finished / canceled'), 500
 
         # update process order status to 'order completed'
         db.cursor().execute(
@@ -851,7 +851,7 @@ def order_complete():
 
     except:
         db.rollback()
-        response = jsonify({'msg': 'complete order failed'})
+        response = jsonify('complete order failed')
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.status_code = 500
         return response
