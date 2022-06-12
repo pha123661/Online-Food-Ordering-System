@@ -261,7 +261,7 @@ def order_made():
                 where PID = ?
             ''', (Quantity, PID))
     except Exception as e:
-        print(type(Exception), str(e))
+        print(type(e), str(e))
         db.rollback()
         return jsonify({
             'message': 'Failed to create order: please try again'
@@ -312,7 +312,8 @@ def order_preview():
     """).fetchall()
 
     # decode image + calculate price
-    assert len(rst) == len(Quantities)
+    if len(rst) != len(Quantities):
+        return "Product modified by store, please try again!", 500
     Products = [dict(r) for r in rst]
 
     Subtotal = 0
@@ -739,12 +740,14 @@ def order_delete():
         if is_shopowner == 'true':
             print("Shopowner cancels order")
             db.cursor().execute(
-                'update Process_Order set PO_type = 3 where OID = ?', (delete_OID, )
+                'update Process_Order set PO_type = 3 where OID = ?', (
+                    delete_OID, )
             )
         elif is_shopowner == 'false':
             print("User cancels order")
             db.cursor().execute(
-                'update Process_Order set PO_type = 1 where OID = ?', (delete_OID, )
+                'update Process_Order set PO_type = 1 where OID = ?', (
+                    delete_OID, )
             )
         # refund: add transaction record
         # user <- shop
@@ -765,7 +768,7 @@ def order_delete():
             from Orders
             where OID = ?
         ''', (delete_OID, )).fetchone()[0]
-        product_details = json.loads(rst)['Products']     
+        product_details = json.loads(rst)['Products']
         # get all PIDs and Quantities
         PIDs = []
         Quantities = []
@@ -777,7 +780,8 @@ def order_delete():
         for PID, quantity in zip(PIDs, Quantities):
             print(PID, quantity)
             db.cursor().execute(
-                'update Products set P_quantity = P_quantity + ? where PID = ?', (quantity, PID)
+                'update Products set P_quantity = P_quantity + ? where PID = ?', (
+                    quantity, PID)
             )
 
     except:
@@ -833,7 +837,8 @@ def order_complete():
 
         # update process order status to 'order completed'
         db.cursor().execute(
-            'update Process_Order set PO_type = 2 where OID = ?', (complete_OID, )
+            'update Process_Order set PO_type = 2 where OID = ?', (
+                complete_OID, )
         )
 
     except:
