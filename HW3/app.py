@@ -682,8 +682,10 @@ def search_transactionRecord():
             strftime('%Y/%m/%d %H:%M', T_time) as Time,
             case
                 when T_action = 2 then Subj_name
-                when T_action = 1 then Obj_name
-                else S_name
+                when T_action = 1 and is_refund = 0 then Obj_name
+                when T_action = 1 and is_refund = 1 then S_name
+                when T_action = 0 and is_refund = 0 then S_name
+                when T_action = 0 and is_refund = 1 then Obj_name
             end as Trader,
             T_amount
         from Transaction_Record natural join Subj_Name natural join Obj_Name natural join Shop_Name
