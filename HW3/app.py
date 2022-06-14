@@ -1175,10 +1175,12 @@ def top_up():
     return redirect(url_for('nav'))
 
 
-# @app.errorhandler(Exception)
-# def all_exception_handler(error):
-#     print(error)
-#     return "invalid!", 500
+@app.errorhandler(Exception)
+def all_exception_handler(error):
+    print("**all_exception_handler**")
+    print(error)
+    return "invalid", 500
+
 
 def main():
     init_db()
