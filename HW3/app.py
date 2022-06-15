@@ -18,10 +18,6 @@ SCHEMA = 'schema.sql'
 
 # distance boundary
 DISTANCE_BOUNDARY = {'medium': 200, 'far': 600}
-ORDER_DETAIL_PATH = './static/order_details/'
-
-if not os.path.exists(ORDER_DETAIL_PATH):
-    os.makedirs(ORDER_DETAIL_PATH)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(99)
