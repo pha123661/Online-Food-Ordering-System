@@ -2,7 +2,7 @@
 
 ![mainpage](./screenshot.jpeg)
 
-Online Food Ordering System Website using basic Python(Flask), SQL, HTML & CSS. It has a food ordering module for a customer. It also provides menu and orders management module for admin.
+Online Food Ordering System Website using basic Python(Flask), SQL, HTML, JS & CSS. It has a food ordering module for a customer. It also provides menu and orders management module for admin.
 
 Course project: Introduction to database by Jiun-Long Huang (NYCU 2022 Spring)
 
